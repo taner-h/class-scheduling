@@ -1,0 +1,37 @@
+[
+    {
+       "name":"Matematik II",
+       "code": "ING107",
+       "studentNumber":32,
+       "departmant":"BM",
+       "year":1,
+       "sessions": [2,2,2],
+       "isOptional":false,
+       "isDifficult":true
+    },
+    {
+       "name":"Fizik II",
+       "studentNumber":33,
+       "departmant":"BM",
+       "year":1,
+       "isOptional":false,
+       "isDifficult":false
+    },
+    {
+       "name":"Kimya 1",
+       "studentNumber": 30,
+       "departmant":"BM",
+       "year":1,
+       "isOptional":false,
+       "isDifficult":false
+    },
+    {
+       "name":"Kimya 1",
+       "studentNumber":30,
+       "departmant":"EM",
+       "year":1,
+       "isOptional":false,
+       "isDifficult":false
+    }
+ ]
+ 
