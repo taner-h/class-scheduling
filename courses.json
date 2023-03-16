@@ -1,37 +1,307 @@
 [
     {
-       "name":"Matematik II",
-       "code": "ING107",
-       "studentNumber":32,
-       "departmant":"BM",
-       "year":1,
-       "sessions": [2,2,2],
-       "isOptional":false,
-       "isDifficult":true
+        "name":"Matematik II",
+        "code":"ING107",
+        "department":"BM",
+        "year":1,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":0
+            },
+            {
+                "length":2,
+                "teacherId":0
+            },
+            {
+                "length":2,
+                "teacherId":0
+            }
+        ]
     },
     {
-       "name":"Fizik II",
-       "studentNumber":33,
-       "departmant":"BM",
-       "year":1,
-       "isOptional":false,
-       "isDifficult":false
+        "name":"Fizik II",
+        "code":"ING117",
+        "department":"BM",
+        "year":1,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":2
+            },
+            {
+                "suffix":"Lab A",
+                "isLab": true,
+                "length":2,
+                "teacherId":18
+            },
+            {
+                "suffix":"Lab B",
+                "isLab": true,
+                "length":2,
+                "teacherId":18
+            }
+        ]
     },
     {
-       "name":"Kimya 1",
-       "studentNumber": 30,
-       "departmant":"BM",
-       "year":1,
-       "isOptional":false,
-       "isDifficult":false
+        "name":"Algoritma ve İleri Bilgisayar Programlama",
+        "code":"ING114",
+        "department":"BM",
+        "year":1,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":3
+            },
+            {
+                "length":3,
+                "teacherId":3
+            }
+        ]
     },
     {
-       "name":"Kimya 1",
-       "studentNumber":30,
-       "departmant":"EM",
-       "year":1,
-       "isOptional":false,
-       "isDifficult":false
-    }
- ]
- 
+        "name":"Programlama Dillerinin Prensipleri",
+        "code":"ING115",
+        "department":"BM",
+        "year":1,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":3
+            }
+        ]
+    },
+    {
+        "name":"Kariyer Planlama",
+        "code":"CNT120",
+        "department":"BM",
+        "year":1,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":7
+            }
+        ]
+    },
+    {
+        "name":"Bilgisayar Sistemlerine Giriş",
+        "code":"INF116",
+        "department":"BM",
+        "year":1,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":5
+            }
+        ]
+    },
+    {
+        "name":"Teknik Resim",
+        "code":"ING144",
+        "department":"BM",
+        "year":1,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":6
+            }
+        ]
+    },
+    {
+        "name":"Sayısal Elektronik",
+        "code":"ING220",
+        "department":"BM",
+        "year":2,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":8
+            },
+            {  
+                "suffix":"Lab A",
+                "isLab": true,
+                "length":2,
+                "teacherId":8
+            },
+            {
+                "suffix":"Lab B",
+                "isLab": true,
+                "length":2,
+                "teacherId":8
+            }
+        ]
+    },
+    {
+        "name":"Differansiyel Denklemler",
+        "code":"ING208",
+        "department":"BM",
+        "year":2,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":1
+            }
+        ]
+    },
+    {
+        "name":"Bilgisayar Mühendisliği İçin Olasılık ve İstatiğe Giriş",
+        "code":"ING211",
+        "department":"BM",
+        "year":2,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":9
+            }
+        ]
+    },
+    {
+        "name":"Nesneye Yönelik Programlama",
+        "code":"INF243",
+        "department":"BM",
+        "year":2,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":10
+            },
+            {
+                "length":2,
+                "teacherId":10
+            },
+            {
+                "suffix":"Lab A",
+                "isLab": true,
+                "length":2,
+                "teacherId":10
+            },
+            {
+                "suffix":"Lab B",
+                "isLab": true,
+                "length":2,
+                "teacherId":10
+            }
+        ]
+    },
+    {
+        "name":"Yüksek Matematik II",
+        "code":"ING252",
+        "department":"BM",
+        "year":2,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":1
+            }
+        ]
+    },
+    {
+        "name":"Bilgi Teorisi",
+        "code":"INF365",
+        "department":"BM",
+        "year":3,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":4
+            }
+        ]
+    },
+    {
+        "name":"Sayısal İşaret İşleme",
+        "code":"INF345",
+        "department":"BM",
+        "year":3,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":11
+            }
+        ]
+    },
+    {
+        "name":"Mikroişlemciler",
+        "code":"INF340",
+        "department":"BM",
+        "year":3,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":11
+            },
+            {
+                "suffix":"Lab A",
+                "isLab": true,
+                "length":2,
+                "teacherId":11
+            },
+            {
+                "suffix":"Lab B",
+                "isLab": true,
+                "length":2,
+                "teacherId":11
+            }
+        ]
+    },
+    {
+        "name":"Veritabanı Yönetimi ve Güvenliği",
+        "code":"INF360",
+        "department":"BM",
+        "year":3,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":13
+            }
+        ]
+    },
+    {
+        "name":"Sayısal Analiz",
+        "code":"INF325",
+        "department":"BM",
+        "year":3,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":4
+            }
+        ]
+    },
+    {
+        "name":"İşletim Sistemleri",
+        "code":"INF333",
+        "department":"BM",
+        "year":3,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":12
+            }
+        ]
+    },
+    {
+        "name":"Bilgisayar Ağları",
+        "code":"INF334",
+        "department":"BM",
+        "year":3,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":14
+            }
+        ]
+    },
+    {
+        "name":"Otomat ve Diller Teorisi",
+        "code":"INF323",
+        "department":"BM",
+        "year":3,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":15
+            }
+        ]
+    },
+
+]
