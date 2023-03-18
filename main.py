@@ -60,7 +60,6 @@ with open('./data/courses.json', encoding='utf-8') as json_file:
 with open('./data/fixedSlots.json', encoding='utf-8') as json_file:
     fixedSlots = json.load(json_file)
 
-teachers = []
 for teacher in teachers_json:
     teachers.append(Teacher(
         teacher['id'], teacher['firstName'], teacher['lastName'], teacher['unavailable']))
