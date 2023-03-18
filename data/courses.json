@@ -3,7 +3,7 @@
         "id":0,
         "name":"Matematik II",
         "code":"ING107",
-        "department":"BM",
+        "department":0,
         "year":1,
         "sessions":[
             {
@@ -24,7 +24,7 @@
         "id":1,
         "name":"Fizik II",
         "code":"ING117",
-        "department":"BM",
+        "department":0,
         "year":1,
         "sessions":[
             {
@@ -49,7 +49,7 @@
         "id":2,
         "name":"Algoritma ve İleri Bilgisayar Programlama",
         "code":"ING114",
-        "department":"BM",
+        "department":0,
         "year":1,
         "sessions":[
             {
@@ -66,7 +66,7 @@
         "id":3,
         "name":"Programlama Dillerinin Prensipleri",
         "code":"ING115",
-        "department":"BM",
+        "department":0,
         "year":1,
         "sessions":[
             {
@@ -79,7 +79,7 @@
         "id":4,
         "name":"Kariyer Planlama",
         "code":"CNT120",
-        "department":"BM",
+        "department":0,
         "year":1,
         "sessions":[
             {
@@ -92,7 +92,7 @@
         "id":5,
         "name":"Bilgisayar Sistemlerine Giriş",
         "code":"INF116",
-        "department":"BM",
+        "department":0,
         "year":1,
         "sessions":[
             {
@@ -105,7 +105,7 @@
         "id":6,
         "name":"Teknik Resim",
         "code":"ING144",
-        "department":"BM",
+        "department":0,
         "year":1,
         "sessions":[
             {
@@ -118,7 +118,7 @@
         "id":7,
         "name":"Sayısal Elektronik",
         "code":"ING220",
-        "department":"BM",
+        "department":0,
         "year":2,
         "sessions":[
             {
@@ -143,7 +143,7 @@
         "id":8,
         "name":"Differansiyel Denklemler",
         "code":"ING208",
-        "department":"BM",
+        "department":0,
         "year":2,
         "sessions":[
             {
@@ -154,9 +154,9 @@
     },
     {
         "id":9,
-        "name":"Bilgisayar Mühendisliği İçin Olasılık ve İstatiğe Giriş",
+        "name":"Bilgisayar Mühendisliği İçin Olasılık ve İstatistiğe Giriş",
         "code":"ING211",
-        "department":"BM",
+        "department":0,
         "year":2,
         "sessions":[
             {
@@ -169,7 +169,7 @@
         "id":10,
         "name":"Nesneye Yönelik Programlama",
         "code":"INF243",
-        "department":"BM",
+        "department":0,
         "year":2,
         "sessions":[
             {
@@ -198,7 +198,7 @@
         "id":11,
         "name":"Yüksek Matematik II",
         "code":"ING252",
-        "department":"BM",
+        "department":0,
         "year":2,
         "sessions":[
             {
@@ -211,7 +211,7 @@
         "id":12,
         "name":"Bilgi Teorisi",
         "code":"INF365",
-        "department":"BM",
+        "department":0,
         "year":3,
         "sessions":[
             {
@@ -224,7 +224,7 @@
         "id":13,
         "name":"Sayısal İşaret İşleme",
         "code":"INF345",
-        "department":"BM",
+        "department":0,
         "year":3,
         "sessions":[
             {
@@ -237,7 +237,7 @@
         "id":14,
         "name":"Mikroişlemciler",
         "code":"INF340",
-        "department":"BM",
+        "department":0,
         "year":3,
         "sessions":[
             {
@@ -262,7 +262,7 @@
         "id":15,
         "name":"Veritabanı Yönetimi ve Güvenliği",
         "code":"INF360",
-        "department":"BM",
+        "department":0,
         "year":3,
         "sessions":[
             {
@@ -275,7 +275,7 @@
         "id":16,
         "name":"Sayısal Analiz",
         "code":"INF325",
-        "department":"BM",
+        "department":0,
         "year":3,
         "sessions":[
             {
@@ -288,7 +288,7 @@
         "id":17,
         "name":"İşletim Sistemleri",
         "code":"INF333",
-        "department":"BM",
+        "department":0,
         "year":3,
         "sessions":[
             {
@@ -301,7 +301,7 @@
         "id":18,
         "name":"Bilgisayar Ağları",
         "code":"INF334",
-        "department":"BM",
+        "department":0,
         "year":3,
         "sessions":[
             {
@@ -314,7 +314,7 @@
         "id":19,
         "name":"Otomat ve Diller Teorisi",
         "code":"INF323",
-        "department":"BM",
+        "department":0,
         "year":3,
         "sessions":[
             {
@@ -327,7 +327,7 @@
         "id":20,
         "name":"Yöneylem Araştırması",
         "code":"IND471",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -344,7 +344,7 @@
         "id":21,
         "name":"Mühendislik Ekonomisi",
         "code":"IND472",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -361,7 +361,7 @@
         "id":22,
         "name":"Sistem Mühendisliği",
         "code":"INF437",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -374,7 +374,7 @@
         "id":23,
         "name":"Bilgi Çıkarımı ve Veri Madenciliğine Giriş",
         "code":"INF483",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -387,7 +387,7 @@
         "id":24,
         "name":"Bilgisayar Mühendisliğinde Özel Konular",
         "code":"INF446",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -400,7 +400,7 @@
         "id":25,
         "name":"Gömülü Sistem Tasarım Temelleri",
         "code":"INF482",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -417,7 +417,7 @@
         "id":26,
         "name":"Yazılım Mühendisliği ve Nesneye Yönelik Tasarım",
         "code":"INF481",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -434,7 +434,7 @@
         "id":27,
         "name":"Bitirme Projesi",
         "code":"INF494",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -447,7 +447,7 @@
         "id":28,
         "name":"Şifrelemeye Giriş",
         "code":"INF441",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -460,7 +460,7 @@
         "id":29,
         "name":"Girişimcilik",
         "code":"CNT417",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -473,7 +473,7 @@
         "id":30,
         "name":"Sosyal Medya",
         "code":"CNT416",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -486,7 +486,7 @@
         "id":31,
         "name":"Fotoğrafçılık",
         "code":"CNT411",
-        "department":"BM",
+        "department":0,
         "year":4,
         "sessions":[
             {
@@ -499,7 +499,7 @@
         "id":32,
         "code":"ING107",
         "name":"Matematik II",
-        "department":"EM",
+        "department":1,
         "year":1,
         "sessions":[
             {
@@ -520,7 +520,7 @@
         "id":33,
         "code":"ING117",
         "name":"Fizik II",
-        "department":"EM",
+        "department":1,
         "year":1,
         "sessions":[
             {
@@ -545,7 +545,7 @@
         "id":34,
         "code":"ING134",
         "name":"Python ile Bilgisayar Programlama",
-        "department":"EM",
+        "department":1,
         "year":1,
         "sessions":[
             {
@@ -562,7 +562,7 @@
         "id":35,
         "code":"ING145",
         "name":"Teknik Resim",
-        "department":"EM",
+        "department":1,
         "year":1,
         "sessions":[
             {
@@ -575,7 +575,7 @@
         "id":36,
         "code":"CNT120",
         "name":"Kariyer Planlama",
-        "department":"EM",
+        "department":1,
         "year":1,
         "sessions":[
             {
@@ -588,7 +588,7 @@
         "id":37,
         "code":"CNT110",
         "name":"Muhasebeye Giriş",
-        "department":"EM",
+        "department":1,
         "year":1,
         "sessions":[
             {
@@ -601,7 +601,7 @@
         "id":38,
         "code":"ING252",
         "name":"Yüksek Matematik II",
-        "department":"EM",
+        "department":1,
         "year":2,
         "sessions":[
             {
@@ -614,7 +614,7 @@
         "id":39,
         "code":"ING208",
         "name":"Diferansiyel Denklemler",
-        "department":"EM",
+        "department":1,
         "year":2,
         "sessions":[
             {
@@ -627,7 +627,7 @@
         "id":40,
         "code":"ING224",
         "name":"Bilişim Teknolojilerine Giriş",
-        "department":"EM",
+        "department":1,
         "year":2,
         "sessions":[
             {
@@ -640,7 +640,7 @@
         "id":41,
         "code":"ING242",
         "name":"İstatistik",
-        "department":"EM",
+        "department":1,
         "year":2,
         "sessions":[
             {
@@ -653,7 +653,7 @@
         "id":42,
         "code":"ING225",
         "name":"Mühendisler için Proje, Risk ve Değişiklik Yönetimi",
-        "department":"EM",
+        "department":1,
         "year":2,
         "sessions":[
             {
@@ -670,7 +670,7 @@
         "id":43,
         "code":"IND232",
         "name":"Üretim Yöntemleri ve Malzeme Bilimi",
-        "department":"EM",
+        "department":1,
         "year":2,
         "sessions":[
             {
@@ -683,7 +683,7 @@
         "id":44,
         "code":"IND377",
         "name":"Oyun Teorisine Giriş",
-        "department":"EM",
+        "department":1,
         "year":3,
         "sessions":[
             {
@@ -696,7 +696,7 @@
         "id":45,
         "code":"IND345",
         "name":"Ergonomi",
-        "department":"EM",
+        "department":1,
         "year":3,
         "sessions":[
             {
@@ -709,7 +709,7 @@
         "id":46,
         "code":"IND362",
         "name":"Proje Yönetimine Giriş",
-        "department":"EM",
+        "department":1,
         "year":3,
         "sessions":[
             {
@@ -720,23 +720,23 @@
     },
     {
         "id":47,
-        "code":"IND423",
-        "name":"Finans Mühendisliği",
-        "department":"EM",
+        "code":"IND375",
+        "name":"Uygulamalarla Matematiksel Modelleme",
+        "department":1,
         "year":3,
         "sessions":[
             {
                 "length":3,
-                "teacherId":25
+                "teacherId":29
             }
         ]
     },
     {
         "id":48,
-        "code":"IND482",
-        "name":"Endüstri Mühendisliğinde Güncel Konular ve Uygulamaları",
-        "department":"EM",
-        "year":4,
+        "code":"IND304",
+        "name":"Modelleme ve Simülasyon",
+        "department":1,
+        "year":3,
         "sessions":[
             {
                 "length":3,
@@ -746,9 +746,82 @@
     },
     {
         "id":49,
+        "code":"IND321",
+        "name":"Mühendislik Ekonomisi",
+        "department":1,
+        "year":3,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":27
+            },
+            {
+                "length":2,
+                "teacherId":27
+            }
+        ]
+    },
+    {
+        "id":50,
+        "code":"IND336",
+        "name":"Üretim Planlama ve Kontrol",
+        "department":1,
+        "year":3,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":21
+            }
+        ]
+    },
+    {
+        "id":51,
+        "code":"IND372",
+        "name":"Yöneylem Araştırması II",
+        "department":1,
+        "year":3,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":25
+            },
+            {
+                "length":2,
+                "teacherId":22
+            }
+        ]
+    },
+    {
+        "id":52,
+        "code":"IND423",
+        "name":"Finans Mühendisliği",
+        "department":1,
+        "year":4,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":25
+            }
+        ]
+    },
+    {
+        "id":53,
+        "code":"IND482",
+        "name":"Endüstri Mühendisliğinde Güncel Konular ve Uygulamaları",
+        "department":1,
+        "year":4,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":24
+            }
+        ]
+    },
+    {
+        "id":54,
         "code":"CNT476",
         "name":"İş Hukuku",
-        "department":"EM",
+        "department":1,
         "year":4,
         "sessions":[
             {
@@ -758,24 +831,23 @@
         ]
     },
     {
-        "id":50,
+        "id":55,
         "code":"IND497",
         "name":"Bitirme Projesi",
-        "department":"EM",
+        "department":1,
         "year":4,
         "sessions":[
             {
                 "length":3,
                 "teacherId":37
-
             }
         ]
     },
     {
-        "id":51,
+        "id":56,
         "code":"IND404",
         "name":"Sistem Dinamiği",
-        "department":"EM",
+        "department":1,
         "year":4,
         "sessions":[
             {
@@ -785,10 +857,10 @@
         ]
     },
     {
-        "id":52,
+        "id":57,
         "code":"IND422",
         "name":"Investment Analysis",
-        "department":"EM",
+        "department":1,
         "year":4,
         "sessions":[
             {
@@ -798,15 +870,80 @@
         ]
     },
     {
-        "id":53,
+        "id":58,
         "code":"IND433",
-        "name":"Enterprıse Resources Planning",
-        "department":"EM",
+        "name":"Enterprise Resources Planning",
+        "department":1,
         "year":4,
         "sessions":[
             {
                 "length":3,
                 "teacherId":31
+            }
+        ]
+    },
+    {
+        "id":59,
+        "code":"IND439",
+        "name":"Enerji Politikaları ve Planlaması",
+        "department":1,
+        "year":4,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":35
+            }
+        ]
+    },
+    {
+        "id":60,
+        "code":"IND456",
+        "name":"Toplam Kalite Yönetimi",
+        "department":1,
+        "year":4,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":32
+            }
+        ]
+    },
+    {
+        "id":61,
+        "code":"IND463",
+        "name":"Tesis Planlama",
+        "department":1,
+        "year":4,
+        "sessions":[
+            {
+                "length":3,
+                "teacherId":32
+            }
+        ]
+    },
+    {
+        "id":62,
+        "code":"CNT474",
+        "name":"Risk Analizi ve Yönetimi",
+        "department":1,
+        "year":4,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":27
+            }
+        ]
+    },
+    {
+        "id":63,
+        "code":"CNT475",
+        "name":"Rekabet ve Pazarlama Yönetimi",
+        "department":1,
+        "year":4,
+        "sessions":[
+            {
+                "length":2,
+                "teacherId":33
             }
         ]
     }
