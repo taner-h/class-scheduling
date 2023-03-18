@@ -1,5 +1,6 @@
 [
     {
+        "id":0,
         "name":"Matematik II",
         "code":"ING107",
         "department":"BM",
@@ -20,6 +21,7 @@
         ]
     },
     {
+        "id":1,
         "name":"Fizik II",
         "code":"ING117",
         "department":"BM",
@@ -31,19 +33,20 @@
             },
             {
                 "suffix":"Lab A",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":18
             },
             {
                 "suffix":"Lab B",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":18
             }
         ]
     },
     {
+        "id":2,
         "name":"Algoritma ve İleri Bilgisayar Programlama",
         "code":"ING114",
         "department":"BM",
@@ -60,6 +63,7 @@
         ]
     },
     {
+        "id":3,
         "name":"Programlama Dillerinin Prensipleri",
         "code":"ING115",
         "department":"BM",
@@ -72,6 +76,7 @@
         ]
     },
     {
+        "id":4,
         "name":"Kariyer Planlama",
         "code":"CNT120",
         "department":"BM",
@@ -84,6 +89,7 @@
         ]
     },
     {
+        "id":5,
         "name":"Bilgisayar Sistemlerine Giriş",
         "code":"INF116",
         "department":"BM",
@@ -96,6 +102,7 @@
         ]
     },
     {
+        "id":6,
         "name":"Teknik Resim",
         "code":"ING144",
         "department":"BM",
@@ -108,6 +115,7 @@
         ]
     },
     {
+        "id":7,
         "name":"Sayısal Elektronik",
         "code":"ING220",
         "department":"BM",
@@ -117,21 +125,22 @@
                 "length":2,
                 "teacherId":8
             },
-            {  
+            {
                 "suffix":"Lab A",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":8
             },
             {
                 "suffix":"Lab B",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":8
             }
         ]
     },
     {
+        "id":8,
         "name":"Differansiyel Denklemler",
         "code":"ING208",
         "department":"BM",
@@ -144,6 +153,7 @@
         ]
     },
     {
+        "id":9,
         "name":"Bilgisayar Mühendisliği İçin Olasılık ve İstatiğe Giriş",
         "code":"ING211",
         "department":"BM",
@@ -156,6 +166,7 @@
         ]
     },
     {
+        "id":10,
         "name":"Nesneye Yönelik Programlama",
         "code":"INF243",
         "department":"BM",
@@ -171,19 +182,20 @@
             },
             {
                 "suffix":"Lab A",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":10
             },
             {
                 "suffix":"Lab B",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":10
             }
         ]
     },
     {
+        "id":11,
         "name":"Yüksek Matematik II",
         "code":"ING252",
         "department":"BM",
@@ -196,6 +208,7 @@
         ]
     },
     {
+        "id":12,
         "name":"Bilgi Teorisi",
         "code":"INF365",
         "department":"BM",
@@ -208,6 +221,7 @@
         ]
     },
     {
+        "id":13,
         "name":"Sayısal İşaret İşleme",
         "code":"INF345",
         "department":"BM",
@@ -220,6 +234,7 @@
         ]
     },
     {
+        "id":14,
         "name":"Mikroişlemciler",
         "code":"INF340",
         "department":"BM",
@@ -231,19 +246,20 @@
             },
             {
                 "suffix":"Lab A",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":11
             },
             {
                 "suffix":"Lab B",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":11
             }
         ]
     },
     {
+        "id":15,
         "name":"Veritabanı Yönetimi ve Güvenliği",
         "code":"INF360",
         "department":"BM",
@@ -256,6 +272,7 @@
         ]
     },
     {
+        "id":16,
         "name":"Sayısal Analiz",
         "code":"INF325",
         "department":"BM",
@@ -268,6 +285,7 @@
         ]
     },
     {
+        "id":17,
         "name":"İşletim Sistemleri",
         "code":"INF333",
         "department":"BM",
@@ -280,6 +298,7 @@
         ]
     },
     {
+        "id":18,
         "name":"Bilgisayar Ağları",
         "code":"INF334",
         "department":"BM",
@@ -292,6 +311,7 @@
         ]
     },
     {
+        "id":19,
         "name":"Otomat ve Diller Teorisi",
         "code":"INF323",
         "department":"BM",
@@ -304,6 +324,7 @@
         ]
     },
     {
+        "id":20,
         "name":"Yöneylem Araştırması",
         "code":"IND471",
         "department":"BM",
@@ -320,6 +341,7 @@
         ]
     },
     {
+        "id":21,
         "name":"Mühendislik Ekonomisi",
         "code":"IND472",
         "department":"BM",
@@ -336,6 +358,7 @@
         ]
     },
     {
+        "id":22,
         "name":"Sistem Mühendisliği",
         "code":"INF437",
         "department":"BM",
@@ -348,6 +371,7 @@
         ]
     },
     {
+        "id":23,
         "name":"Bilgi Çıkarımı ve Veri Madenciliğine Giriş",
         "code":"INF483",
         "department":"BM",
@@ -360,6 +384,7 @@
         ]
     },
     {
+        "id":24,
         "name":"Bilgisayar Mühendisliğinde Özel Konular",
         "code":"INF446",
         "department":"BM",
@@ -372,6 +397,7 @@
         ]
     },
     {
+        "id":25,
         "name":"Gömülü Sistem Tasarım Temelleri",
         "code":"INF482",
         "department":"BM",
@@ -388,6 +414,7 @@
         ]
     },
     {
+        "id":26,
         "name":"Yazılım Mühendisliği ve Nesneye Yönelik Tasarım",
         "code":"INF481",
         "department":"BM",
@@ -404,6 +431,7 @@
         ]
     },
     {
+        "id":27,
         "name":"Bitirme Projesi",
         "code":"INF494",
         "department":"BM",
@@ -415,6 +443,7 @@
         ]
     },
     {
+        "id":28,
         "name":"Şifrelemeye Giriş",
         "code":"INF441",
         "department":"BM",
@@ -427,6 +456,7 @@
         ]
     },
     {
+        "id":29,
         "name":"Girişimcilik",
         "code":"CNT417",
         "department":"BM",
@@ -439,6 +469,7 @@
         ]
     },
     {
+        "id":30,
         "name":"Sosyal Medya",
         "code":"CNT416",
         "department":"BM",
@@ -451,6 +482,7 @@
         ]
     },
     {
+        "id":31,
         "name":"Fotoğrafçılık",
         "code":"CNT411",
         "department":"BM",
@@ -463,6 +495,7 @@
         ]
     },
     {
+        "id":32,
         "code":"ING107",
         "name":"Matematik II",
         "department":"EM",
@@ -483,6 +516,7 @@
         ]
     },
     {
+        "id":33,
         "code":"ING117",
         "name":"Fizik II",
         "department":"EM",
@@ -494,19 +528,20 @@
             },
             {
                 "suffix":"Lab A",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":18
             },
             {
                 "suffix":"Lab B",
-                "isLab": true,
+                "isLab":true,
                 "length":2,
                 "teacherId":18
             }
         ]
     },
     {
+        "id":34,
         "code":"ING134",
         "name":"Python ile Bilgisayar Programlama",
         "department":"EM",
@@ -523,6 +558,7 @@
         ]
     },
     {
+        "id":35,
         "code":"ING145",
         "name":"Teknik Resim",
         "department":"EM",
@@ -535,6 +571,7 @@
         ]
     },
     {
+        "id":36,
         "code":"CNT120",
         "name":"Kariyer Planlama",
         "department":"EM",
@@ -547,6 +584,7 @@
         ]
     },
     {
+        "id":37,
         "code":"CNT110",
         "name":"Muhasebeye Giriş",
         "department":"EM",
@@ -559,6 +597,7 @@
         ]
     },
     {
+        "id":38,
         "code":"ING252",
         "name":"Yüksek Matematik II",
         "department":"EM",
@@ -571,6 +610,7 @@
         ]
     },
     {
+        "id":39,
         "code":"ING208",
         "name":"Diferansiyel Denklemler",
         "department":"EM",
@@ -583,6 +623,7 @@
         ]
     },
     {
+        "id":40,
         "code":"ING224",
         "name":"Bilişim Teknolojilerine Giriş",
         "department":"EM",
@@ -595,6 +636,7 @@
         ]
     },
     {
+        "id":41,
         "code":"ING242",
         "name":"İstatistik",
         "department":"EM",
@@ -607,6 +649,7 @@
         ]
     },
     {
+        "id":42,
         "code":"ING225",
         "name":"Mühendisler için Proje, Risk ve Değişiklik Yönetimi",
         "department":"EM",
@@ -623,6 +666,7 @@
         ]
     },
     {
+        "id":43,
         "code":"IND232",
         "name":"Üretim Yöntemleri ve Malzeme Bilimi",
         "department":"EM",
@@ -635,6 +679,7 @@
         ]
     },
     {
+        "id":44,
         "code":"IND377",
         "name":"Oyun Teorisine Giriş",
         "department":"EM",
@@ -647,6 +692,7 @@
         ]
     },
     {
+        "id":45,
         "code":"IND345",
         "name":"Ergonomi",
         "department":"EM",
@@ -659,6 +705,7 @@
         ]
     },
     {
+        "id":46,
         "code":"IND362",
         "name":"Proje Yönetimine Giriş",
         "department":"EM",
@@ -670,7 +717,8 @@
             }
         ]
     },
-     {
+    {
+        "id":47,
         "code":"IND423",
         "name":"Finans Mühendisliği",
         "department":"EM",
@@ -683,6 +731,7 @@
         ]
     },
     {
+        "id":48,
         "code":"IND482",
         "name":"Endüstri Mühendisliğinde Güncel Konular ve Uygulamaları",
         "department":"EM",
@@ -695,6 +744,7 @@
         ]
     },
     {
+        "id":49,
         "code":"CNT476",
         "name":"İş Hukuku",
         "department":"EM",
@@ -707,6 +757,7 @@
         ]
     },
     {
+        "id":50,
         "code":"IND497",
         "name":"Bitirme Projesi",
         "department":"EM",
@@ -718,6 +769,7 @@
         ]
     },
     {
+        "id":51,
         "code":"IND404",
         "name":"Sistem Dinamiği",
         "department":"EM",
@@ -730,6 +782,7 @@
         ]
     },
     {
+        "id":52,
         "code":"IND422",
         "name":"Investment Analysis",
         "department":"EM",
@@ -742,6 +795,7 @@
         ]
     },
     {
+        "id":53,
         "code":"IND433",
         "name":"Enterprıse Resources Planning",
         "department":"EM",
@@ -753,7 +807,4 @@
             }
         ]
     }
-
-
-
 ]
