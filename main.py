@@ -1,15 +1,7 @@
 import json
+import time
+import numpy as np
 
-
-# courseIds = [101, 102, 103]
-
-# print([courses[courseId]['name'] for courseId in courseIds])
-
-# bmCourses = {k: v for k, v in courses.items() if v['departmant'] == 'EM'}
-# print(bmCourses)
-
-# for k, v in courses.items():
-#     print(v['name'])
 
 class Course:
     def __init__(self, id, name, code, department, year):
@@ -59,12 +51,14 @@ class Schedule:
         self.isValid = None
 
 
-with open('teachers.json', encoding='utf-8') as json_file:
+with open('./data/teachers.json', encoding='utf-8') as json_file:
     teachers_json = json.load(json_file)
 
-with open('courses.json', encoding='utf-8') as json_file:
+with open('./data/courses.json', encoding='utf-8') as json_file:
     courses_json = json.load(json_file)
 
+with open('./data/fixedSlots.json', encoding='utf-8') as json_file:
+    fixedSlots = json.load(json_file)
 
 teachers = []
 for teacher in teachers_json:
@@ -85,5 +79,17 @@ for course in courses_json:
                     session['length'], isLab=session.get("isLab", False), suffix=session.get("suffix", None)))
         index += 1
 
-for session in sessions:
-    session.print()
+allSlots = [list(range(9, 18))] * 5
+
+availableSlots = []
+for i in range(5):
+    availableSlots.append(
+        [x for x in allSlots[i] if x not in fixedSlots[i]])
+
+for department in range(2):
+    for year in range(1, 5):
+        semester = filter(lambda session: session.course.department ==
+                          department and session.course.year == year, sessions)
+        print(f'Department: {department}, year: {year}')
+        for session in semester:
+            session.print()
