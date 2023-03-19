@@ -53,26 +53,53 @@ class Schedule:
     def __init__(self, state):
         self.state = state
 
+        self.semesters = self.filterSemesters()
         self.f = None
         self.isValid = None
+        self.semesterCollisions = self.calculateSemesterCollisions()
 
-    def print(self):
+    def filterSemesters(self):
+        semesters = []
         for department in range(2):
             for year in range(1, 5):
-                print(
-                    f"\n\n----- {getSemesterName(department, year)} -----\n\n")
                 semester = filter(lambda session: session.course.department ==
                                   department and session.course.year == year, self.state)
-                for day in range(5):
-                    semesterCopy = copy.deepcopy(semester)
-                    sessionsOfDay = filter(
-                        lambda session: session.day == day, semesterCopy)
-                    ordered = sorted(
-                        sessionsOfDay, key=lambda session: session.hour)
-                    print(f'\n{getDayName(day)}\n')
-                    for session in ordered:
-                        print(
-                            f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+                semesters.append(semester)
+        return semesters
+
+    def print(self):
+        for index, semester in enumerate(self.semesters):
+            print(
+                f"\n\n----- {getSemesterName(index // 4, index % 4 + 1)} -----\n\n")
+            for day in range(5):
+                semesterCopy = copy.deepcopy(semester)
+                sessionsOfDay = filter(
+                    lambda session: session.day == day, semesterCopy)
+                ordered = sorted(
+                    sessionsOfDay, key=lambda session: session.hour)
+                print(f'\n{getDayName(day)}\n')
+                for session in ordered:
+                    print(
+                        f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+
+    # def calculateSemesterCollisions(self):
+    #     totalCollisions = []
+    #     for semester in self.semesters:
+    #         for day in range(5):
+    #             sessionsOfDay = filter(
+    #                 lambda session: session.day == day, semester)
+    #             usedSlots = []
+    #             sessionIds = []
+    #             for session in sessionsOfDay:
+    #                 usedSlots.extend(
+    #                     list(range(session.hour, session.hour + session.length)))
+    #                 sessionIds.extend([session.id] * session.length)
+    #             seen = set()
+    #             collisions = [x for x in usedSlots if x in seen or seen.add(x)]
+    #             for collision in collisions:
+    #                 collisionIndex = [i for i, slot in enumerate(usedSlots) if slot == collision]
+    #                 for i in collisionIndex:
+    #                     totalCollisions.append(sessionIds[i])
 
 
 def getSemesterName(department, year):
@@ -190,10 +217,5 @@ for i in range(5):
     #     for session in ordered:
     #         session.printSchedule()
 
-time1 = time.time()
-SIZE = 16
-population = generatePopulation(SIZE)
-population[0].print()
-time2 = time.time()
-
-print((time2-time1)*1000, 'ms')
+schedule = generateRandomSchedule()
+# schedule.print()
