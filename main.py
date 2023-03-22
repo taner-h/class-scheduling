@@ -55,6 +55,7 @@ class Schedule:
         self.state = state
 
         self.semesters = self.filterSemesters()
+        self.teacherSessions = self.filterByTeachers()
         self.f = None
         self.isValid = None
         self.semesterCollisions = self.calculateSemesterCollisions()
@@ -68,6 +69,14 @@ class Schedule:
                 semesters.append(semester)
 
         return semesters
+
+    def filterByTeachers(self):
+        filtered = []
+        for teacher in teachers:
+            teacherSessions = list(
+                filter(lambda session: session.teacher.id == teacher.id, self.state))
+            filtered.append(teacherSessions)
+        return filtered
 
     def print(self):
         for index, semester in enumerate(self.semesters):
@@ -83,6 +92,22 @@ class Schedule:
                 for session in ordered:
                     print(
                         f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+
+    def printTeacherSessions(self):
+        for sessionsOfTeacher in self.teacherSessions:
+            if sessionsOfTeacher[0].teacher.firstName != "":
+                print(
+                    f'\n\n----- {sessionsOfTeacher[0].teacher.firstName} {sessionsOfTeacher[0].teacher.lastName} -----\n')
+                for day in range(5):
+                    sessionsOfDay = list(filter(
+                        lambda session: session.day == day, sessionsOfTeacher))
+                    if len(sessionsOfDay) != 0:
+                        ordered = sorted(
+                            sessionsOfDay, key=lambda session: session.hour)
+                        print(f'\n{getDayName(day)}\n')
+                        for session in ordered:
+                            print(
+                                f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
 
     def calculateSemesterCollisions(self):
         totalCollisions = 0
@@ -114,6 +139,10 @@ class Schedule:
 def getSemesterName(department, year):
     departmentName = 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
     return f"{departmentName} - {year}. Sınıf"
+
+
+def getDepartmentName(department):
+    return 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
 
 
 def getDayName(day):
@@ -210,28 +239,12 @@ for i in range(5):
     availableSlots.append(
         [x for x in allSlots[i] if x not in fixedSlots[i]])
 
-# semesters = []
-# for department in range(2):
-#     for year in range(1, 5):
-#         semester = filter(lambda session: session.course.department ==
-#                           department and session.course.year == year, sessions)
-#         found = False
-#         while found == False:
-#             found = generateInitialSemesterSchedule(semester)
-#         semesters.extend(found)
-    # for day in range(5):
-    #     sessionsOfDay = filter(lambda session: session.day == day, found)
-    #     ordered = sorted(sessionsOfDay, key=lambda session: session.hour)
-    #     print(f'\nDay {day}\n')
-    #     for session in ordered:
-    #         session.printSchedule()
 
 schedule = generateRandomSchedule()
-# for session in schedule.state:
-#     session.printSchedule()
 schedule.print()
-schedule.state[0].day = 0
-schedule.state[0].hour = 9
-schedule.state[0].length = 9
-schedule.print()
-schedule.calculateSemesterCollisions()
+schedule.printTeacherSessions()
+# schedule.state[0].day = 0
+# schedule.state[0].hour = 9
+# schedule.state[0].length = 9
+# schedule.print()
+# schedule.calculateSemesterCollisions()
