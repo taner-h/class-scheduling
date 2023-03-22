@@ -3,6 +3,7 @@ import time
 import numpy as np
 import random
 import copy
+from collections import Counter
 
 
 class Course:
@@ -46,7 +47,7 @@ class Session:
 
     def printSchedule(self):
         print(
-            f"{self.id}: {self.name} ({self.length}), {self.day} {self.hour}.00 - {self.length } hours")
+            f"{self.id}: {self.name}, {getDayName(self.day)} {self.hour}.00 - {session.hour + session.length}.00")
 
 
 class Schedule:
@@ -62,9 +63,10 @@ class Schedule:
         semesters = []
         for department in range(2):
             for year in range(1, 5):
-                semester = filter(lambda session: session.course.department ==
-                                  department and session.course.year == year, self.state)
+                semester = list(filter(lambda session: session.course.department ==
+                                       department and session.course.year == year, self.state))
                 semesters.append(semester)
+
         return semesters
 
     def print(self):
@@ -73,8 +75,8 @@ class Schedule:
                 f"\n\n----- {getSemesterName(index // 4, index % 4 + 1)} -----\n\n")
             for day in range(5):
                 semesterCopy = copy.deepcopy(semester)
-                sessionsOfDay = filter(
-                    lambda session: session.day == day, semesterCopy)
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, semesterCopy))
                 ordered = sorted(
                     sessionsOfDay, key=lambda session: session.hour)
                 print(f'\n{getDayName(day)}\n')
@@ -82,24 +84,31 @@ class Schedule:
                     print(
                         f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
 
-    # def calculateSemesterCollisions(self):
-    #     totalCollisions = []
-    #     for semester in self.semesters:
-    #         for day in range(5):
-    #             sessionsOfDay = filter(
-    #                 lambda session: session.day == day, semester)
-    #             usedSlots = []
-    #             sessionIds = []
-    #             for session in sessionsOfDay:
-    #                 usedSlots.extend(
-    #                     list(range(session.hour, session.hour + session.length)))
-    #                 sessionIds.extend([session.id] * session.length)
-    #             seen = set()
-    #             collisions = [x for x in usedSlots if x in seen or seen.add(x)]
-    #             for collision in collisions:
-    #                 collisionIndex = [i for i, slot in enumerate(usedSlots) if slot == collision]
-    #                 for i in collisionIndex:
-    #                     totalCollisions.append(sessionIds[i])
+    def calculateSemesterCollisions(self):
+        totalCollisions = 0
+        semesters = copy.deepcopy(self.semesters)
+
+        for semester in semesters:
+            for day in range(5):
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, semester))
+                usedSlots = []
+                sessionIds = []
+                for session in sessionsOfDay:
+                    usedSlots.extend(
+                        list(range(session.hour, session.hour + session.length)))
+                    # sessionIds.extend([session.id] * session.length)
+                collisionCount = [
+                    count - 1 for item, count in Counter(usedSlots).items() if count > 1]
+                print(collisionCount)
+                totalCollisions += sum(collisionCount)
+                # seen = set()
+                # collisions = [x for x in usedSlots if x in seen or seen.add(x)]
+                # for collision in collisions:
+                #     collisionIndex = [i for i, slot in enumerate(usedSlots) if slot == collision]
+                #     for i in collisionIndex:
+                #         totalCollisions.append(sessionIds[i])
+        return totalCollisions
 
 
 def getSemesterName(department, year):
@@ -218,4 +227,11 @@ for i in range(5):
     #         session.printSchedule()
 
 schedule = generateRandomSchedule()
-# schedule.print()
+# for session in schedule.state:
+#     session.printSchedule()
+schedule.print()
+schedule.state[0].day = 0
+schedule.state[0].hour = 9
+schedule.state[0].length = 9
+schedule.print()
+schedule.calculateSemesterCollisions()
