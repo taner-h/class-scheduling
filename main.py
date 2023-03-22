@@ -46,8 +46,7 @@ class Session:
             f"{self.id}: {self.name} ({self.length}), {self.teacher.firstName} {self.teacher.lastName}")
 
     def printSchedule(self):
-        print(
-            f"{self.id}: {self.name}, {getDayName(self.day)} {self.hour}.00 - {session.hour + session.length}.00")
+        print(f"{self.id}: {self.name}, {getDayName(self.day)} {self.hour}.00 - {session.hour + session.length}.00")
 
 
 class Schedule:
@@ -56,9 +55,13 @@ class Schedule:
 
         self.semesters = self.filterSemesters()
         self.teacherSessions = self.filterByTeachers()
+        self.semesterCollisions = self.calculateSemesterCollisions()
+        self.teacherCollisions = self.calculateTeacherCollisions()
+        self.multiTeacherCollision = self.calculateMultiTeacherSessionCollisions()
+        self.breakHourViolations = self.calculateBreakHourViolations()
+
         self.f = None
         self.isValid = None
-        self.semesterCollisions = self.calculateSemesterCollisions()
 
     def filterSemesters(self):
         semesters = []
@@ -107,25 +110,21 @@ class Schedule:
                         print(f'\n{getDayName(day)}\n')
                         for session in ordered:
                             print(
-                                f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+                                f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getDepartmentShortName(session.course.department)}-{session.course.year})')
 
     def calculateSemesterCollisions(self):
         totalCollisions = 0
-        semesters = copy.deepcopy(self.semesters)
-
-        for semester in semesters:
+        for semester in self.semesters:
             for day in range(5):
                 sessionsOfDay = list(filter(
                     lambda session: session.day == day, semester))
                 usedSlots = []
-                sessionIds = []
                 for session in sessionsOfDay:
                     usedSlots.extend(
                         list(range(session.hour, session.hour + session.length)))
                     # sessionIds.extend([session.id] * session.length)
                 collisionCount = [
                     count - 1 for item, count in Counter(usedSlots).items() if count > 1]
-                print(collisionCount)
                 totalCollisions += sum(collisionCount)
                 # seen = set()
                 # collisions = [x for x in usedSlots if x in seen or seen.add(x)]
@@ -135,6 +134,71 @@ class Schedule:
                 #         totalCollisions.append(sessionIds[i])
         return totalCollisions
 
+    def calculateTeacherCollisions(self):
+        totalCollisions = 0
+
+        for sessionsOfTeacher in self.teacherSessions:
+            for day in range(5):
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, sessionsOfTeacher))
+                usedSlots = []
+                for session in sessionsOfDay:
+                    usedSlots.extend(
+                        list(range(session.hour, session.hour + session.length)))
+
+                collisionCount = [
+                    count - 1 for item, count in Counter(usedSlots).items() if count > 1]
+                # if sum(collisionCount) > 0:
+                #     print(collisionCount)
+                #     print(sessionsOfTeacher[0].teacher.id)
+                totalCollisions += sum(collisionCount)
+        return totalCollisions
+
+    def calculateMultiTeacherSessionCollisions(self):
+        totalCollisions = 0
+
+        for teacherId in multiTeachers:
+            sessionsOfTeacher = list(
+                filter(lambda session: session.teacher.id == teacherId, self.state))
+            multiTeacherSession = [
+                session for session in self.state if session.course.id == multiTeacherCourseId][0]
+            sessionsOfTeacher.append(multiTeacherSession)
+            # for session in sessionsOfTeacher:
+            #     print(f'{session.name}, {session.day}, {session.hour}')
+
+            for day in range(5):
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, sessionsOfTeacher))
+                usedSlots = []
+                for session in sessionsOfDay:
+                    usedSlots.extend(
+                        list(range(session.hour, session.hour + session.length)))
+                collisionCount = [
+                    count - 1 for item, count in Counter(usedSlots).items() if count > 1]
+                # if sum(collisionCount) > 0:
+                #     print(collisionCount)
+                #     print(sessionsOfTeacher[0].teacher.id)
+        return totalCollisions
+
+    def calculateBreakHourViolations(self):
+        totalViolations = 0
+        i = 0
+        for semester in self.semesters:
+            for day in [0, 1, 3]:
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, semester))
+                usedSlots = []
+                for session in sessionsOfDay:
+                    usedSlots.extend(
+                        list(range(session.hour, session.hour + session.length)))
+                if 12 in usedSlots and 13 in usedSlots:
+                    totalViolations += 1
+                    print(f'VIOLATION = {i}, {getDayName(day)}')
+            i += 1
+
+    def hasAllSessions(self):
+        return len(self.state) == 87
+
 
 def getSemesterName(department, year):
     departmentName = 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
@@ -143,6 +207,10 @@ def getSemesterName(department, year):
 
 def getDepartmentName(department):
     return 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
+
+
+def getDepartmentShortName(department):
+    return 'BM' if department == 0 else 'EM'
 
 
 def getDayName(day):
@@ -155,9 +223,7 @@ def generateInitialSemesterSchedule(semester):
     available = copy.deepcopy(availableSlots)
     availableDays = [i for (i, x) in enumerate(available) if x]
     scheduledSessions = []
-    # print(availableDays)
     for session in semester:
-        # session.print()
         day, hour = selectAvailableDayAndHour(
             available, availableDays, session)
         if day is not False:
@@ -167,6 +233,11 @@ def generateInitialSemesterSchedule(semester):
                               if x not in list(range(hour, hour + session.length))]
             availableDays = [i for (i, x) in enumerate(available) if x]
             scheduledSessions.append(session)
+
+            # if 12 in available[day] or 13 in available[day]:
+            #     scheduledSessions.append(session)
+            # else:
+            #     return False
         else:
             return False
     return scheduledSessions
@@ -177,11 +248,14 @@ def selectAvailableDayAndHour(available, availableDays, session):
     while True:
         day = random.choice(availableDays)
         hour = random.choice(available[day])
-        isAllAvailable = all(x in available[day] for x in list(
-            range(hour, hour + session.length)))
-        if (isAllAvailable):
-            return day, hour
-        count += 1
+        slots = list(range(hour, hour + session.length))
+        if 12 in slots and 13 in slots:
+            count += 1
+        else:
+            isAllAvailable = all(x in available[day] for x in slots)
+            if (isAllAvailable):
+                return day, hour
+            count += 1
         if count > 50:
             return False, False
 
@@ -193,7 +267,7 @@ def generateRandomSchedule():
             semester = filter(lambda session: session.course.department ==
                               department and session.course.year == year, sessions)
             found = False
-            while found == False:
+            while found == False or len(found) == 0:
                 found = generateInitialSemesterSchedule(semester)
             semesters.extend(found)
     schedule = Schedule(semesters)
@@ -236,15 +310,28 @@ allSlots = [list(range(9, 18))] * 5
 
 availableSlots = []
 for i in range(5):
-    availableSlots.append(
-        [x for x in allSlots[i] if x not in fixedSlots[i]])
+    availableSlots.append([x for x in allSlots[i] if x not in fixedSlots[i]])
 
+multiTeacherCourseId, multiTeachers = next(
+    (course['id'], course['teachers']) for course in courses_json if course.get("hasMultiTeachers", False) == True)
+multiTeacherSessionId = next(
+    session.id for session in sessions if session.course.id == multiTeacherCourseId)
 
 schedule = generateRandomSchedule()
+# schedule.printTeacherSessions()
 schedule.print()
-schedule.printTeacherSessions()
+
+
+# * Checking multi-teacher session
+print(multiTeacherCourseId)
+print(multiTeachers)
+
+print(schedule.state[0].hour)
+# * Checking for collisions
 # schedule.state[0].day = 0
 # schedule.state[0].hour = 9
 # schedule.state[0].length = 9
 # schedule.print()
 # schedule.calculateSemesterCollisions()
+
+print(len(schedule.state))

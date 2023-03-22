@@ -453,7 +453,6 @@
         "code":"INF441",
         "department":0,
         "year":4,
-        "isOptional":true,
         "sessions":[
             {
                 "length":3,
@@ -467,7 +466,8 @@
         "code":"CNT417",
         "department":0,
         "year":4,
-        "isOptional":true,
+        "hasMultiTeachers":true,
+        "teachers":[15, 13, 8],
         "sessions":[
             {
                 "length":2,
