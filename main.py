@@ -57,8 +57,10 @@ class Schedule:
         self.teacherSessions = self.filterByTeachers()
         self.semesterCollisions = self.calculateSemesterCollisions()
         self.teacherCollisions = self.calculateTeacherCollisions()
-        self.multiTeacherCollision = self.calculateMultiTeacherSessionCollisions()
+        self.multiTeacherCollisions = self.calculateMultiTeacherSessionCollisions()
         self.breakHourViolations = self.calculateBreakHourViolations()
+        self.departmentMeetingViolations = self.calculateDepartmentMeetingViolations()
+        self.fridayBreakViolations = self.calculateFridayBreakViolations()
 
         self.f = None
         self.isValid = None
@@ -181,8 +183,8 @@ class Schedule:
         return totalCollisions
 
     def calculateBreakHourViolations(self):
-        totalViolations = 0
-        i = 0
+        totalViolations = []
+        semesterIndex = 0
         for semester in self.semesters:
             for day in [0, 1, 3]:
                 sessionsOfDay = list(filter(
@@ -192,9 +194,42 @@ class Schedule:
                     usedSlots.extend(
                         list(range(session.hour, session.hour + session.length)))
                 if 12 in usedSlots and 13 in usedSlots:
-                    totalViolations += 1
-                    print(f'VIOLATION = {i}, {getDayName(day)}')
-            i += 1
+                    totalViolations.append((semesterIndex, day))
+                    # print(f'VIOLATION = {semesterIndex}, {getDayName(day)}')
+            semesterIndex += 1
+        return totalViolations
+
+    def calculateDepartmentMeetingViolations(self):
+        totalViolations = []
+        semesterIndex = 0
+        day = 2
+        for semester in self.semesters:
+            sessionsOfDay = list(filter(
+                lambda session: session.day == day, semester))
+            usedSlots = []
+            for session in sessionsOfDay:
+                usedSlots.extend(
+                    list(range(session.hour, session.hour + session.length)))
+            if 13 in usedSlots:
+                totalViolations.append(semesterIndex)
+            semesterIndex += 1
+        return totalViolations
+
+    def calculateFridayBreakViolations(self):
+        totalViolations = []
+        semesterIndex = 0
+        day = 4
+        for semester in self.semesters:
+            sessionsOfDay = list(filter(
+                lambda session: session.day == day, semester))
+            usedSlots = []
+            for session in sessionsOfDay:
+                usedSlots.extend(
+                    list(range(session.hour, session.hour + session.length)))
+            if 12 in usedSlots or 13 in usedSlots:
+                totalViolations.append(semesterIndex)
+            semesterIndex += 1
+        return totalViolations
 
     def hasAllSessions(self):
         return len(self.state) == 87
@@ -232,6 +267,7 @@ def generateInitialSemesterSchedule(semester):
             available[day] = [x for x in available[day]
                               if x not in list(range(hour, hour + session.length))]
             availableDays = [i for (i, x) in enumerate(available) if x]
+
             scheduledSessions.append(session)
 
             # if 12 in available[day] or 13 in available[day]:
@@ -323,15 +359,12 @@ schedule.print()
 
 
 # * Checking multi-teacher session
-print(multiTeacherCourseId)
-print(multiTeachers)
+# print(multiTeacherCourseId)
+# print(multiTeachers)
 
-print(schedule.state[0].hour)
 # * Checking for collisions
 # schedule.state[0].day = 0
 # schedule.state[0].hour = 9
 # schedule.state[0].length = 9
 # schedule.print()
 # schedule.calculateSemesterCollisions()
-
-print(len(schedule.state))
