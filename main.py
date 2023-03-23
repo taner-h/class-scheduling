@@ -55,13 +55,20 @@ class Schedule:
 
         self.semesters = self.filterSemesters()
         self.teacherSessions = self.filterByTeachers()
+
         self.semesterCollisions = self.calculateSemesterCollisions()
         self.teacherCollisions = self.calculateTeacherCollisions()
         self.multiTeacherCollisions = self.calculateMultiTeacherSessionCollisions()
-        self.breakHourViolations = self.calculateBreakHourViolations()
-        self.departmentMeetingViolations = self.calculateDepartmentMeetingViolations()
-        self.fridayBreakViolations = self.calculateFridayBreakViolations()
-        self.freeDays = self.calculateFreeDays()
+
+        violations = self.calculateViolations()
+
+        self.breakHourViolations = violations[0]
+        self.departmentMeetingViolations = violations[1]
+        self.fridayBreakViolations = violations[2]
+        self.freeDays = violations[3]
+        self.singleSessionDays = violations[4]
+        # self.multipleSessionsOfSameCourseOnDay = calculateMultipleSessionsOfSameCourseOnDay()
+
         self.f = None
         self.isValid = None
 
@@ -250,6 +257,45 @@ class Schedule:
                     totalFreeDays.append(index)
         return totalFreeDays
 
+    def calculateViolations(self):
+        breakViolations = []
+        meetingViolations = []
+        fridayViolations = []
+        freeDays = []
+        singleSessionDays = []
+        for index, semester in enumerate(self.semesters):
+            for day in range(5):
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, semester))
+                usedSlots = []
+                for session in sessionsOfDay:
+                    usedSlots.extend(
+                        list(range(session.hour, session.hour + session.length)))
+                # Check for break violations:
+                if day in [0, 1, 4] and (12 in usedSlots and 13 in usedSlots):
+                    breakViolations.append((index, day))
+                # Check for free days
+                if len(usedSlots) == 0 and day not in [1, 2]:
+                    freeDays.append((index, day))
+                # Check for friday violations
+                if day == 4 and (12 in usedSlots or 13 in usedSlots):
+                    fridayViolations.append(index)
+                # Check for meeting violations
+                if day == 2 and 13 in usedSlots:
+                    meetingViolations.append(index)
+                # Check for single-session days
+                if len(sessionsOfDay) == 1 and day in [0, 3, 4]:
+                    singleSessionDays.append((index, day))
+                if len(sessionsOfDay) == 0 and day in [1, 2]:
+                    singleSessionDays.append((index, day))
+        violations = [breakViolations, meetingViolations,
+                      fridayViolations, freeDays, singleSessionDays]
+        for violation in violations:
+            print(violation)
+        return violations
+
+    # def calculateMultipleSessionsOfSameCourseOnDay(self):
+
 
 def getSemesterName(department, year):
     departmentName = 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
@@ -372,7 +418,6 @@ multiTeacherSessionId = next(
 schedule = generateRandomSchedule()
 # schedule.printTeacherSessions()
 schedule.print()
-print('Free Days: ', schedule.freeDays)
 
 # * Checking multi-teacher session
 # print(multiTeacherCourseId)
