@@ -140,6 +140,13 @@ class Schedule:
                 print(
                     f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getDepartmentShortName(session.course.department)})')
             print()
+        for collision in self.multiTeacherCollisions:
+            print(
+                f'\n{collision[0].teacher.firstName} {collision[0].teacher.lastName}\n')
+            for session in collision:
+                print(
+                    f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getDepartmentShortName(session.course.department)})')
+            print()
 
     def calculateSemesterCollisions(self):
         collisions = []
@@ -167,7 +174,6 @@ class Schedule:
         return collisions
 
     def calculateTeacherCollisions(self):
-        totalCollisions = 0
         collisions = []
         for sessionsOfTeacher in self.teacherSessions:
             for day in range(5):
@@ -195,7 +201,7 @@ class Schedule:
         return collisions
 
     def calculateMultiTeacherSessionCollisions(self):
-        totalCollisions = 0
+        collisions = []
 
         for teacherId in multiTeachers:
             sessionsOfTeacher = list(
@@ -210,15 +216,28 @@ class Schedule:
                 sessionsOfDay = list(filter(
                     lambda session: session.day == day, sessionsOfTeacher))
                 usedSlots = []
+                sessionIds = []
+
                 for session in sessionsOfDay:
                     usedSlots.extend(
                         list(range(session.hour, session.hour + session.length)))
-                collisionCount = [
-                    count - 1 for item, count in Counter(usedSlots).items() if count > 1]
+                    sessionIds.extend([session.id] * session.length)
+                collisionSlots = [
+                    item for item, count in Counter(usedSlots).items() if count > 1]
+                for collisionSlot in collisionSlots:
+                    indices = [index for index, slot in enumerate(
+                        usedSlots) if slot == collisionSlot]
+                    collisionSessions = []
+                    for index in indices:
+                        collisionSession = list(filter(
+                            lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        collisionSessions.append(collisionSession)
+                    collisions.append(collisionSessions)
+
                 # if sum(collisionCount) > 0:
                 #     print(collisionCount)
                 #     print(sessionsOfTeacher[0].teacher.id)
-        return totalCollisions
+        return collisions
 
     def calculateBreakHourViolations(self):
         totalViolations = []
