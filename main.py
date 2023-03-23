@@ -67,7 +67,7 @@ class Schedule:
         self.fridayBreakViolations = violations[2]
         self.freeDays = violations[3]
         self.singleSessionDays = violations[4]
-        # self.multipleSessionsOfSameCourseOnDay = calculateMultipleSessionsOfSameCourseOnDay()
+        self.multipleCourseSessions = violations[5]
 
         self.f = None
         self.isValid = None
@@ -263,6 +263,8 @@ class Schedule:
         fridayViolations = []
         freeDays = []
         singleSessionDays = []
+        multipleSessions = []
+
         for index, semester in enumerate(self.semesters):
             for day in range(5):
                 sessionsOfDay = list(filter(
@@ -288,13 +290,24 @@ class Schedule:
                     singleSessionDays.append((index, day))
                 if len(sessionsOfDay) == 0 and day in [1, 2]:
                     singleSessionDays.append((index, day))
+                # Check for multiple sessions of same course in the same day
+                courseIds = [session.course.id for session in sessionsOfDay]
+                multipleSessionCourseIds = [
+                    item for item, count in Counter(courseIds).items() if count > 1]
+                for multipleSessionCourseId in multipleSessionCourseIds:
+                    sessionsOfCourse = list(filter(
+                        lambda session: session.course.id == multipleSessionCourseId, sessionsOfDay))
+                    multipleSessions.append(sessionsOfCourse)
+
+        # for course in multipleSessions:
+        #     for session in course:
+        #         print(
+        #             f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
         violations = [breakViolations, meetingViolations,
-                      fridayViolations, freeDays, singleSessionDays]
+                      fridayViolations, freeDays, singleSessionDays, multipleSessions]
         for violation in violations:
             print(violation)
         return violations
-
-    # def calculateMultipleSessionsOfSameCourseOnDay(self):
 
 
 def getSemesterName(department, year):
