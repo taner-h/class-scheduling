@@ -123,27 +123,50 @@ class Schedule:
                             print(
                                 f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getDepartmentShortName(session.course.department)}-{session.course.year})')
 
+    def printSemesterCollisions(self):
+        print('\n\n-----Donem Cakismalari-----\n\n')
+        for collision in self.semesterCollisions:
+            for session in collision:
+                print(
+                    f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+            print()
+
     def calculateSemesterCollisions(self):
-        totalCollisions = 0
+        collisions = []
         for semester in self.semesters:
             for day in range(5):
                 sessionsOfDay = list(filter(
                     lambda session: session.day == day, semester))
                 usedSlots = []
+                sessionIds = []
                 for session in sessionsOfDay:
                     usedSlots.extend(
                         list(range(session.hour, session.hour + session.length)))
-                    # sessionIds.extend([session.id] * session.length)
-                collisionCount = [
-                    count - 1 for item, count in Counter(usedSlots).items() if count > 1]
-                totalCollisions += sum(collisionCount)
+                    sessionIds.extend([session.id] * session.length)
+                collisionSlots = [
+                    item for item, count in Counter(usedSlots).items() if count > 1]
+                for collisionSlot in collisionSlots:
+                    indices = [index for index, slot in enumerate(
+                        usedSlots) if slot == collisionSlot]
+                    collisionSessions = []
+
+                    for index in indices:
+                        collisionSession = list(filter(
+                            lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        collisionSessions.append(collisionSession)
+                    collisions.append(collisionSessions)
                 # seen = set()
                 # collisions = [x for x in usedSlots if x in seen or seen.add(x)]
                 # for collision in collisions:
                 #     collisionIndex = [i for i, slot in enumerate(usedSlots) if slot == collision]
                 #     for i in collisionIndex:
                 #         totalCollisions.append(sessionIds[i])
-        return totalCollisions
+        # for collision in collisions:
+        #     for session in collision:
+        #         print(
+        #             f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+        # print(len(collisions))
+        return collisions
 
     def calculateTeacherCollisions(self):
         totalCollisions = 0
@@ -305,8 +328,8 @@ class Schedule:
         #             f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
         violations = [breakViolations, meetingViolations,
                       fridayViolations, freeDays, singleSessionDays, multipleSessions]
-        for violation in violations:
-            print(violation)
+        # for violation in violations:
+        #     print(violation)
         return violations
 
 
@@ -430,15 +453,16 @@ multiTeacherSessionId = next(
 
 schedule = generateRandomSchedule()
 # schedule.printTeacherSessions()
-schedule.print()
+# schedule.print()
 
 # * Checking multi-teacher session
 # print(multiTeacherCourseId)
 # print(multiTeachers)
 
 # * Checking for collisions
-# schedule.state[0].day = 0
-# schedule.state[0].hour = 9
-# schedule.state[0].length = 9
-# schedule.print()
-# schedule.calculateSemesterCollisions()
+schedule.state[0].day = 0
+schedule.state[0].hour = 9
+schedule.state[0].length = 9
+schedule.print()
+schedule.semesterCollisions = schedule.calculateSemesterCollisions()
+schedule.printSemesterCollisions()
