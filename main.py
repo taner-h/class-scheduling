@@ -312,8 +312,10 @@ class Schedule:
         freeDays = []
         singleSessionDays = []
         multipleSessions = []
+        totalSlotSpan = []
 
         for index, semester in enumerate(self.semesters):
+            semesterSlotSpan = []
             for day in range(5):
                 sessionsOfDay = list(filter(
                     lambda session: session.day == day, semester))
@@ -346,7 +348,18 @@ class Schedule:
                     sessionsOfCourse = list(filter(
                         lambda session: session.course.id == multipleSessionCourseId, sessionsOfDay))
                     multipleSessions.append(sessionsOfCourse)
-
+                # Calculate the slot span
+                if len(usedSlots) != 0:
+                    earliestSlot = min(usedSlots)
+                    latestSlot = max(usedSlots)
+                    slotSpan = latestSlot - earliestSlot + 1
+                    semesterSlotSpan.append(slotSpan)
+                else:
+                    semesterSlotSpan.append(0)
+            totalSlotSpan.append(semesterSlotSpan)
+        print(totalSlotSpan)
+        print(sum([sum(semesterSlotSpan)
+              for semesterSlotSpan in totalSlotSpan]))
         # for course in multipleSessions:
         #     for session in course:
         #         print(
