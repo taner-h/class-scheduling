@@ -61,7 +61,7 @@ class Schedule:
         self.breakHourViolations = self.calculateBreakHourViolations()
         self.departmentMeetingViolations = self.calculateDepartmentMeetingViolations()
         self.fridayBreakViolations = self.calculateFridayBreakViolations()
-
+        self.freeDays = self.calculateFreeDays()
         self.f = None
         self.isValid = None
 
@@ -97,6 +97,8 @@ class Schedule:
                 for session in ordered:
                     print(
                         f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+                if day in [1, 2]:
+                    print('16.00 - 18.00 - Yabancı Dil')
 
     def printTeacherSessions(self):
         for sessionsOfTeacher in self.teacherSessions:
@@ -234,6 +236,20 @@ class Schedule:
     def hasAllSessions(self):
         return len(self.state) == 87
 
+    def calculateFreeDays(self):
+        totalFreeDays = []
+        for index, semester in enumerate(self.semesters):
+            for day in range(5):
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, semester))
+                usedSlots = []
+                for session in sessionsOfDay:
+                    usedSlots.extend(
+                        list(range(session.hour, session.hour + session.length)))
+                if len(usedSlots) == 0 and day not in [1, 2]:
+                    totalFreeDays.append(index)
+        return totalFreeDays
+
 
 def getSemesterName(department, year):
     departmentName = 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
@@ -356,7 +372,7 @@ multiTeacherSessionId = next(
 schedule = generateRandomSchedule()
 # schedule.printTeacherSessions()
 schedule.print()
-
+print('Free Days: ', schedule.freeDays)
 
 # * Checking multi-teacher session
 # print(multiTeacherCourseId)
