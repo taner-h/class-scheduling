@@ -418,8 +418,6 @@ class Schedule:
         violations = [breakViolations, meetingViolations,
                       fridayViolations, languageSessionViolations, freeDays, singleSessionDays, multipleSessions, totalSlotSpan]
 
-        for violation in violations[3]:
-            print(violation)
         return violations
 
 
@@ -503,44 +501,60 @@ def generatePopulation(size):
     return [generateRandomSchedule() for _ in range(size)]
 
 
-with open('./data/teachers.json', encoding='utf-8') as json_file:
-    teachers_json = json.load(json_file)
+def importData():
+    with open('./data/teachers.json', encoding='utf-8') as json_file:
+        teachers_json = json.load(json_file)
 
-with open('./data/courses.json', encoding='utf-8') as json_file:
-    courses_json = json.load(json_file)
+    with open('./data/courses.json', encoding='utf-8') as json_file:
+        courses_json = json.load(json_file)
 
-with open('./data/fixedSlots.json', encoding='utf-8') as json_file:
-    fixedSlots = json.load(json_file)
+    with open('./data/fixedSlots.json', encoding='utf-8') as json_file:
+        fixedSlots = json.load(json_file)
+    return teachers_json, courses_json, fixedSlots
 
-teachers = []
-for teacher in teachers_json:
-    teachers.append(Teacher(
-        teacher['id'], teacher['firstName'], teacher['lastName'], teacher['unavailable']))
 
-courses = []
-for course in courses_json:
-    courses.append(Course(course['id'], course['name'],
-                   course['code'], course['department'], course['year']))
+def generateObjects():
+    teachers = []
+    for teacher in teachers_json:
+        teachers.append(Teacher(
+            teacher['id'], teacher['firstName'], teacher['lastName'], teacher['unavailable']))
 
-sessions = []
-index = 0
-for course in courses_json:
-    for session in course['sessions']:
-        sessions.append(
-            Session(index, courses[course['id']], teachers[session['teacherId']],
-                    session['length'], isLab=session.get("isLab", False), suffix=session.get("suffix", None)))
-        index += 1
+    courses = []
+    for course in courses_json:
+        courses.append(Course(course['id'], course['name'],
+                              course['code'], course['department'], course['year']))
 
-allSlots = [list(range(9, 18))] * 5
+    sessions = []
+    index = 0
+    for course in courses_json:
+        for session in course['sessions']:
+            sessions.append(
+                Session(index, courses[course['id']], teachers[session['teacherId']],
+                        session['length'], isLab=session.get("isLab", False), suffix=session.get("suffix", None)))
+            index += 1
 
-availableSlots = []
-for i in range(5):
-    availableSlots.append([x for x in allSlots[i] if x not in fixedSlots[i]])
+    return teachers, courses, sessions
 
-multiTeacherCourseId, multiTeachers = next(
-    (course['id'], course['teachers']) for course in courses_json if course.get("hasMultiTeachers", False) == True)
-multiTeacherSessionId = next(
-    session.id for session in sessions if session.course.id == multiTeacherCourseId)
+
+def calculateAvailableSlots():
+    allSlots = [list(range(9, 18))] * 5
+    availableSlots = []
+    for i in range(5):
+        availableSlots.append(
+            [x for x in allSlots[i] if x not in fixedSlots[i]])
+    return availableSlots
+
+
+def getMultiTeacherCourse():
+    return next(
+        (course['id'], course['teachers']) for course in courses_json if course.get("hasMultiTeachers", False) == True)
+
+
+teachers_json, courses_json, fixedSlots = importData()
+teachers, courses, sessions = generateObjects()
+availableSlots = calculateAvailableSlots()
+multiTeacherCourseId, multiTeachers = getMultiTeacherCourse()
+
 
 schedule = generateRandomSchedule()
 # schedule.printTeacherSessions()
