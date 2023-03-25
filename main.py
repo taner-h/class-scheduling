@@ -131,11 +131,17 @@ class Schedule:
 
     def printSemesterCollisions(self):
         print(
-            f'\n\n----- Donem Cakismalari ({len(self.semesterCollisions)}) -----\n')
+            f'\n\n----- Donem Cakismalari ({len(self.semesterCollisions) + len(self.languageSessionViolations)}) -----\n')
         for collision in self.semesterCollisions:
             for session in collision:
                 print(
                     f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+            print()
+
+        for collision in self.languageSessionViolations:
+            for index, day in collision:
+                print(
+                    f'{getDayName(day)}: 16.00 - 18.00 - Yabancı Dil ({index})')
             print()
 
     def printTeacherCollisions(self):
@@ -144,18 +150,30 @@ class Schedule:
 
         for collision in self.teacherCollisions:
             print(
-                f'\n{collision[0].teacher.firstName} {collision[0].teacher.lastName}\n')
+                f'{collision[0].teacher.firstName} {collision[0].teacher.lastName}')
             for session in collision:
                 print(
                     f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getDepartmentShortName(session.course.department)})')
             print()
         for collision in self.multiTeacherCollisions:
             print(
-                f'\n{collision[0].teacher.firstName} {collision[0].teacher.lastName}\n')
+                f'{collision[0].teacher.firstName} {collision[0].teacher.lastName}')
             for session in collision:
                 print(
                     f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getDepartmentShortName(session.course.department)})')
             print()
+
+    def printBreakHourViolations(self):
+        print(
+            f'\n\n----- Öğle Arası İhlalleri ({len(self.fridayBreakViolations) + len(self.breakHourViolations) + len(self.departmentMeetingViolations)}) -----\n')
+        for index, day in self.breakHourViolations:
+            print(f'Öğle Arası İhlali: {index}, {getDayName(day)}')
+
+        for index in self.fridayBreakViolations:
+            print(f'Cuma Arası İhlali: {index}')
+
+        for index in self.departmentMeetingViolations:
+            print(f'Bölüm Toplantısı İhlali: {index}')
 
     def printAvailabilityCollisions(self):
         print(
@@ -455,12 +473,12 @@ class Schedule:
     def calculateFitness(self):
         #! Hard Constraints
         semesterCollisionCount = len(self.semesterCollisions)
+        languageSessionViolationCount = len(self.languageSessionViolations)
         teacherCollisionCount = len(self.teacherCollisions)
         multiTeacherCollisionCount = len(self.multiTeacherCollisions)
-        fridayBreakViolationCount = len(self.fridayBreakViolations)
         breakHourViolationCount = len(self.breakHourViolations)
+        fridayBreakViolationCount = len(self.fridayBreakViolations)
         departmentMeetingViolationCount = len(self.departmentMeetingViolations)
-        languageSessionViolationCount = len(self.languageSessionViolations)
 
         # ? Soft Constraints
         teacherAvailabilityViolationCount = len(
@@ -713,11 +731,12 @@ sortedPopulation = sorted(
 best = sortedPopulation[0]
 
 best.print()
+best.printAvailableSlots()
 best.printSemesterCollisions()
 best.printTeacherCollisions()
+best.printBreakHourViolations()
 best.printAvailabilityCollisions()
 best.printScore()
-best.printAvailableSlots()
 
 # ? Export to file
 # dbfile = open('output/best', 'ab')
