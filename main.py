@@ -59,15 +59,17 @@ class Schedule:
         self.semesterCollisions = self.calculateSemesterCollisions()
         self.teacherCollisions = self.calculateTeacherCollisions()
         self.multiTeacherCollisions = self.calculateMultiTeacherSessionCollisions()
+        self.teacherAvailabilityViolations = self.calculateTeacherAvailabilityViolations()
 
-        violations = self.calculateViolations()
+        results = self.calculateConstraints()
 
-        self.breakHourViolations = violations[0]
-        self.departmentMeetingViolations = violations[1]
-        self.fridayBreakViolations = violations[2]
-        self.freeDays = violations[3]
-        self.singleSessionDays = violations[4]
-        self.multipleCourseSessions = violations[5]
+        self.breakHourViolations = results[0]
+        self.departmentMeetingViolations = results[1]
+        self.fridayBreakViolations = results[2]
+        self.freeDays = results[3]
+        self.singleSessionDays = results[4]
+        self.multipleCourseSessions = results[5]
+        self.teacherAvailabilityViolations = results[6]
 
         self.f = None
         self.isValid = None
@@ -124,7 +126,8 @@ class Schedule:
                                 f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getDepartmentShortName(session.course.department)}-{session.course.year})')
 
     def printSemesterCollisions(self):
-        print('\n\n-----Donem Cakismalari-----\n\n')
+        print(
+            f'\n\n-----Donem Cakismalari ({len(self.semesterCollisions)}) -----\n')
         for collision in self.semesterCollisions:
             for session in collision:
                 print(
@@ -132,7 +135,9 @@ class Schedule:
             print()
 
     def printTeacherCollisions(self):
-        print('\n\n-----Ogretmen Cakismalari-----\n\n')
+        print(
+            f'\n\n-----Ogretmen Cakismalari ({len(self.teacherCollisions) + len(self.multiTeacherCollisions)}) -----\n')
+
         for collision in self.teacherCollisions:
             print(
                 f'\n{collision[0].teacher.firstName} {collision[0].teacher.lastName}\n')
@@ -146,6 +151,16 @@ class Schedule:
             for session in collision:
                 print(
                     f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getDepartmentShortName(session.course.department)})')
+            print()
+
+    def printAvailabilityCollisions(self):
+        print(
+            f'\n\n----- Uygunluk Cakismalari ({len(self.teacherAvailabilityViolations)}) -----\n')
+        for collision in self.teacherAvailabilityViolations:
+            for session in collision:
+                print(f'{session.teacher.firstName} {session.teacher.lastName}')
+                print(
+                    f'{getDayName(session.day)}: {session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
             print()
 
     def calculateSemesterCollisions(self):
@@ -197,7 +212,6 @@ class Schedule:
                             lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
                         collisionSessions.append(collisionSession)
                     collisions.append(collisionSessions)
-
         return collisions
 
     def calculateMultiTeacherSessionCollisions(self):
@@ -237,6 +251,38 @@ class Schedule:
                 # if sum(collisionCount) > 0:
                 #     print(collisionCount)
                 #     print(sessionsOfTeacher[0].teacher.id)
+        return collisions
+
+    def calculateTeacherAvailabilityViolations(self):
+        collisions = []
+        for sessionsOfTeacher in self.teacherSessions:
+            teacher = sessionsOfTeacher[0].teacher
+            for day in range(5):
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, sessionsOfTeacher))
+
+                usedSlots = []
+                sessionIds = []
+                unavailableSlotsOfDay = teacher.unavailable[day]
+
+                for session in sessionsOfDay:
+                    usedSlots.extend(
+                        list(range(session.hour, session.hour + session.length)))
+                    sessionIds.extend([session.id] * session.length)
+
+                collisionSlots = [
+                    slot for slot in usedSlots if slot in unavailableSlotsOfDay]
+                # collisionSlots = [
+                #     item for item, count in Counter(usedSlots).items() if count > 1]
+                for collisionSlot in collisionSlots:
+                    indices = [index for index, slot in enumerate(
+                        usedSlots) if slot == collisionSlot]
+                    collisionSessions = []
+                    for index in indices:
+                        collisionSession = list(filter(
+                            lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        collisionSessions.append(collisionSession)
+                    collisions.append(collisionSessions)
         return collisions
 
     def calculateBreakHourViolations(self):
@@ -305,7 +351,7 @@ class Schedule:
                     totalFreeDays.append(index)
         return totalFreeDays
 
-    def calculateViolations(self):
+    def calculateConstraints(self):
         breakViolations = []
         meetingViolations = []
         fridayViolations = []
@@ -357,15 +403,16 @@ class Schedule:
                 else:
                     semesterSlotSpan.append(0)
             totalSlotSpan.append(semesterSlotSpan)
-        print(totalSlotSpan)
-        print(sum([sum(semesterSlotSpan)
-              for semesterSlotSpan in totalSlotSpan]))
+        # print(totalSlotSpan)
+        # print(sum([sum(semesterSlotSpan)
+        #       for semesterSlotSpan in totalSlotSpan]))
+
         # for course in multipleSessions:
         #     for session in course:
         #         print(
         #             f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
         violations = [breakViolations, meetingViolations,
-                      fridayViolations, freeDays, singleSessionDays, multipleSessions]
+                      fridayViolations, freeDays, singleSessionDays, multipleSessions, totalSlotSpan]
         # for violation in violations:
         #     print(violation)
         return violations
@@ -493,7 +540,9 @@ multiTeacherSessionId = next(
 schedule = generateRandomSchedule()
 # schedule.printTeacherSessions()
 schedule.print()
+schedule.printSemesterCollisions()
 schedule.printTeacherCollisions()
+schedule.printAvailabilityCollisions()
 
 # * Checking multi-teacher session
 # print(multiTeacherCourseId)
