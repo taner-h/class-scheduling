@@ -66,10 +66,10 @@ class Schedule:
         self.breakHourViolations = results[0]
         self.departmentMeetingViolations = results[1]
         self.fridayBreakViolations = results[2]
-        self.freeDays = results[3]
-        self.singleSessionDays = results[4]
-        self.multipleCourseSessions = results[5]
-        self.teacherAvailabilityViolations = results[6]
+        self.languageSessionViolations = results[3]
+        self.freeDays = results[4]
+        self.singleSessionDays = results[5]
+        self.multipleCourseSessions = results[6]
 
         self.f = None
         self.isValid = None
@@ -359,6 +359,7 @@ class Schedule:
         singleSessionDays = []
         multipleSessions = []
         totalSlotSpan = []
+        languageSessionViolations = []
 
         for index, semester in enumerate(self.semesters):
             semesterSlotSpan = []
@@ -381,6 +382,9 @@ class Schedule:
                 # Check for meeting violations
                 if day == 2 and 13 in usedSlots:
                     meetingViolations.append(index)
+                # Check for language session violations
+                if day in [1, 2] and (16 in usedSlots or 17 in usedSlots):
+                    languageSessionViolations.append((index, day))
                 # Check for single-session days
                 if len(sessionsOfDay) == 1 and day in [0, 3, 4]:
                     singleSessionDays.append((index, day))
@@ -412,9 +416,10 @@ class Schedule:
         #         print(
         #             f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
         violations = [breakViolations, meetingViolations,
-                      fridayViolations, freeDays, singleSessionDays, multipleSessions, totalSlotSpan]
-        # for violation in violations:
-        #     print(violation)
+                      fridayViolations, languageSessionViolations, freeDays, singleSessionDays, multipleSessions, totalSlotSpan]
+
+        for violation in violations[3]:
+            print(violation)
         return violations
 
 
@@ -549,9 +554,10 @@ schedule.printAvailabilityCollisions()
 # print(multiTeachers)
 
 # * Checking for collisions
-# schedule.state[0].day = 0
-# schedule.state[0].hour = 9
-# schedule.state[0].length = 9
+# schedule.state[0].day = 2
+# schedule.state[0].hour = 16
+# schedule.state[0].length = 2
 # schedule.print()
 # schedule.semesterCollisions = schedule.calculateSemesterCollisions()
+# schedule.languageSessionViolations = schedule.calculateConstraints()[3]
 # schedule.printSemesterCollisions()
