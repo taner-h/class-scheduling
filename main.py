@@ -70,9 +70,12 @@ class Schedule:
         self.freeDays = results[4]
         self.singleSessionDays = results[5]
         self.multipleCourseSessions = results[6]
+        self.slotSpan = results[7]
 
-        self.f = None
-        self.isValid = None
+        isValid, fitness = self.calculateFitness()
+
+        self.fitness = fitness
+        self.isValid = isValid
 
     def filterSemesters(self):
         semesters = []
@@ -162,6 +165,9 @@ class Schedule:
                 print(
                     f'{getDayName(session.day)}: {session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
             print()
+
+    def printScore(self):
+        print(f'fitness: {round(self.fitness, 2)} (isValid: {self.isValid})')
 
     def calculateSemesterCollisions(self):
         collisions = []
@@ -420,6 +426,52 @@ class Schedule:
 
         return violations
 
+    def calculateFitness(self):
+        #! Hard Constraints
+        semesterCollisionCount = len(self.semesterCollisions)
+        teacherCollisionCount = len(self.teacherCollisions)
+        multiTeacherCollisionCount = len(self.multiTeacherCollisions)
+        fridayBreakViolationCount = len(self.fridayBreakViolations)
+        breakHourViolationCount = len(self.breakHourViolations)
+        departmentMeetingViolationCount = len(self.departmentMeetingViolations)
+        languageSessionViolationCount = len(self.languageSessionViolations)
+
+        # ? Soft Constraints
+        teacherAvailabilityViolationCount = len(
+            self.teacherAvailabilityViolations)
+        freeDayCount = len(self.freeDays)
+        singleSessionDayCount = len(self.singleSessionDays)
+        multipleCourseSessionCount = len(self.multipleCourseSessions)
+        slotSpan = sum([sum(semesterSlotSpan)
+                       for semesterSlotSpan in self.slotSpan])
+
+        score = 100.0
+        isValid = False
+
+        score -= 2 * (semesterCollisionCount + teacherCollisionCount +
+                      multiTeacherCollisionCount + languageSessionViolationCount)
+        score -= 3 * (fridayBreakViolationCount +
+                      departmentMeetingViolationCount + departmentMeetingViolationCount)
+
+        hardConstraintsTotal = semesterCollisionCount + teacherCollisionCount + multiTeacherCollisionCount + fridayBreakViolationCount + \
+            breakHourViolationCount + departmentMeetingViolationCount + \
+            languageSessionViolationCount
+
+        score -= 0.5 * teacherAvailabilityViolationCount
+        score += 2 * freeDayCount
+        score -= 0.3 * singleSessionDayCount
+        score -= 0.5 * multipleCourseSessionCount
+        score -= 0.1 * (slotSpan - 210)
+
+        if (hardConstraintsTotal):
+            score -= 0.1 * score
+            isValid = False
+        else:
+            score += 10
+            isValid = True
+
+        return isValid, score
+
 
 def getSemesterName(department, year):
     departmentName = 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
@@ -552,26 +604,43 @@ def getMultiTeacherCourse():
 
 teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
-availableSlots = calculateAvailableSlots()
 multiTeacherCourseId, multiTeachers = getMultiTeacherCourse()
+availableSlots = calculateAvailableSlots()
 
 
-schedule = generateRandomSchedule()
-# schedule.printTeacherSessions()
-schedule.print()
-schedule.printSemesterCollisions()
-schedule.printTeacherCollisions()
-schedule.printAvailabilityCollisions()
+# schedule = generateRandomSchedule()
+# # schedule.printTeacherSessions()
+# schedule.print()
+# schedule.printSemesterCollisions()
+# schedule.printTeacherCollisions()
+# schedule.printAvailabilityCollisions()
+# schedule.printScore()
 
 # * Checking multi-teacher session
 # print(multiTeacherCourseId)
 # print(multiTeachers)
 
 # * Checking for collisions
-# schedule.state[0].day = 2
-# schedule.state[0].hour = 16
-# schedule.state[0].length = 2
+# schedule.state[0].day = 0
+# schedule.state[0].hour = 9
+# schedule.state[0].length = 8
 # schedule.print()
 # schedule.semesterCollisions = schedule.calculateSemesterCollisions()
 # schedule.languageSessionViolations = schedule.calculateConstraints()[3]
 # schedule.printSemesterCollisions()
+
+
+population = generatePopulation(128)
+sortedPopulation = sorted(
+    population, key=lambda schedule: schedule.fitness, reverse=True)
+for schedule in sortedPopulation:
+    schedule.printScore()
+
+schedule = sortedPopulation[0]
+# schedule = generateRandomSchedule()
+# schedule.printTeacherSessions()
+schedule.print()
+schedule.printSemesterCollisions()
+schedule.printTeacherCollisions()
+schedule.printAvailabilityCollisions()
+schedule.printScore()
