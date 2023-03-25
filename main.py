@@ -72,6 +72,7 @@ class Schedule:
         self.singleSessionDays = results[5]
         self.multipleCourseSessions = results[6]
         self.slotSpan = results[7]
+        self.availableSlots = results[8]
 
         isValid, fitness = self.calculateFitness()
         self.fitness = fitness
@@ -130,7 +131,7 @@ class Schedule:
 
     def printSemesterCollisions(self):
         print(
-            f'\n\n-----Donem Cakismalari ({len(self.semesterCollisions)}) -----\n')
+            f'\n\n----- Donem Cakismalari ({len(self.semesterCollisions)}) -----\n')
         for collision in self.semesterCollisions:
             for session in collision:
                 print(
@@ -139,7 +140,7 @@ class Schedule:
 
     def printTeacherCollisions(self):
         print(
-            f'\n\n-----Ogretmen Cakismalari ({len(self.teacherCollisions) + len(self.multiTeacherCollisions)}) -----\n')
+            f'\n\n----- Ogretmen Cakismalari ({len(self.teacherCollisions) + len(self.multiTeacherCollisions)}) -----\n')
 
         for collision in self.teacherCollisions:
             print(
@@ -165,6 +166,13 @@ class Schedule:
                 print(
                     f'{getDayName(session.day)}: {session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
             print()
+
+    def printAvailableSlots(self):
+        print('\n\n----- Uygun Slotlar -----\n')
+        for index, semester in enumerate(self.availableSlots):
+            print(f'\n\n{index}:', end=' ')
+            for index, day in enumerate(semester):
+                print(f'{getDayName(index)}: {day}', end=', ')
 
     def printScore(self):
         print(f'fitness: {round(self.fitness, 2)} (isValid: {self.isValid})')
@@ -366,9 +374,11 @@ class Schedule:
         multipleSessions = []
         totalSlotSpan = []
         languageSessionViolations = []
+        allAvailableSlots = []
 
         for index, semester in enumerate(self.semesters):
             semesterSlotSpan = []
+            semesterAvailableSlots = calculateAvailableSlots()
             for day in range(5):
                 sessionsOfDay = list(filter(
                     lambda session: session.day == day, semester))
@@ -376,6 +386,9 @@ class Schedule:
                 for session in sessionsOfDay:
                     usedSlots.extend(
                         list(range(session.hour, session.hour + session.length)))
+
+                semesterAvailableSlots[day] = [
+                    slot for slot in semesterAvailableSlots[day] if slot not in usedSlots]
                 # Check for break violations:
                 if day in [0, 1, 4] and (12 in usedSlots and 13 in usedSlots):
                     breakViolations.append((index, day))
@@ -413,6 +426,7 @@ class Schedule:
                 else:
                     semesterSlotSpan.append(0)
             totalSlotSpan.append(semesterSlotSpan)
+            allAvailableSlots.append(semesterAvailableSlots)
         # print(totalSlotSpan)
         # print(sum([sum(semesterSlotSpan)
         #       for semesterSlotSpan in totalSlotSpan]))
@@ -421,10 +435,22 @@ class Schedule:
         #     for session in course:
         #         print(
         #             f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
-        violations = [breakViolations, meetingViolations,
-                      fridayViolations, languageSessionViolations, freeDays, singleSessionDays, multipleSessions, totalSlotSpan]
+        violations = [breakViolations, meetingViolations, fridayViolations, languageSessionViolations,
+                      freeDays, singleSessionDays, multipleSessions, totalSlotSpan, allAvailableSlots]
 
         return violations
+
+    def calculateAvailableSlots():
+        allAvailableSlots = []
+        for semester in self.semesters:
+            for day in range(5):
+                sessionsOfDay = list(filter(
+                    lambda session: session.day == day, semester))
+                usedSlots = []
+                allSlots = [list(range(9, 18))] * 5
+                for session in sessionsOfDay:
+                    usedSlots.extend(
+                        list(range(session.hour, session.hour + session.length)))
 
     def calculateFitness(self):
         #! Hard Constraints
@@ -667,7 +693,7 @@ availableSlots = calculateAvailableSlots()
 # schedule.printSemesterCollisions()
 
 population = generatePopulation(SIZE)
-for i in range(50):
+for i in range(10):
     sortedPopulation = sorted(
         population, key=lambda schedule: schedule.fitness, reverse=True)
     print(f'\n ITERATION {i + 1}')
@@ -691,11 +717,12 @@ best.printSemesterCollisions()
 best.printTeacherCollisions()
 best.printAvailabilityCollisions()
 best.printScore()
+best.printAvailableSlots()
 
 # ? Export to file
-dbfile = open('output/best', 'ab')
-pickle.dump(sortedPopulation[0], dbfile)
-dbfile.close()
+# dbfile = open('output/best', 'ab')
+# pickle.dump(sortedPopulation[0], dbfile)
+# dbfile.close()
 
 # * Import from file
 # dbfile = open('best2', 'rb')
