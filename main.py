@@ -3,6 +3,7 @@ import time
 import numpy as np
 import random
 import copy
+import pickle
 from collections import Counter
 
 
@@ -73,7 +74,6 @@ class Schedule:
         self.slotSpan = results[7]
 
         isValid, fitness = self.calculateFitness()
-
         self.fitness = fitness
         self.isValid = isValid
 
@@ -445,7 +445,7 @@ class Schedule:
         slotSpan = sum([sum(semesterSlotSpan)
                        for semesterSlotSpan in self.slotSpan])
 
-        score = 100.0
+        score = 50.0
         isValid = False
 
         score -= 2 * (semesterCollisionCount + teacherCollisionCount +
@@ -602,6 +602,43 @@ def getMultiTeacherCourse():
         (course['id'], course['teachers']) for course in courses_json if course.get("hasMultiTeachers", False) == True)
 
 
+def performCrossover(schedule1, schedule2):
+    index = random.choice(range(8))
+    schedule1.semesters[index], schedule2.semesters[index] = schedule2.semesters[index], schedule1.semesters[index]
+
+    # schedule1.print()
+    # schedule2.print()
+
+    newSchedule1 = Schedule(getStateFromSemesters(schedule1))
+    newSchedule2 = Schedule(getStateFromSemesters(schedule2))
+
+    return [newSchedule1, newSchedule2]
+
+
+def getStateFromSemesters(schedule):
+    sessions = []
+    for semester in schedule.semesters:
+        for session in semester:
+            sessions.append(session)
+    return sessions
+
+
+def selection(population):
+    scores = [schedule.fitness for schedule in population]
+    return random.choices(population, scores, k=SIZE)
+
+
+def crossover(population):
+    newPopulation = []
+    for index in range(SIZE//2):
+        newSchedules = performCrossover(
+            population[index * 2], population[index * 2 + 1])
+        newPopulation.extend(newSchedules)
+    return newPopulation
+
+
+SIZE = 32
+
 teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
 multiTeacherCourseId, multiTeachers = getMultiTeacherCourse()
@@ -629,18 +666,56 @@ availableSlots = calculateAvailableSlots()
 # schedule.languageSessionViolations = schedule.calculateConstraints()[3]
 # schedule.printSemesterCollisions()
 
+population = generatePopulation(SIZE)
+for i in range(50):
+    sortedPopulation = sorted(
+        population, key=lambda schedule: schedule.fitness, reverse=True)
+    print(f'\n ITERATION {i + 1}')
+    for schedule in sortedPopulation:
+        schedule.printScore()
 
-population = generatePopulation(128)
+    average = sum([schedule.fitness for schedule in sortedPopulation]
+                  ) / len(sortedPopulation)
+    print(f'\nAverage: {average}\n')
+
+    selected = selection(population)
+    population = crossover(selected)
+
 sortedPopulation = sorted(
     population, key=lambda schedule: schedule.fitness, reverse=True)
-for schedule in sortedPopulation:
-    schedule.printScore()
 
-schedule = sortedPopulation[0]
-# schedule = generateRandomSchedule()
-# schedule.printTeacherSessions()
-schedule.print()
-schedule.printSemesterCollisions()
-schedule.printTeacherCollisions()
-schedule.printAvailabilityCollisions()
-schedule.printScore()
+best = sortedPopulation[0]
+
+best.print()
+best.printSemesterCollisions()
+best.printTeacherCollisions()
+best.printAvailabilityCollisions()
+best.printScore()
+
+# ? Export to file
+dbfile = open('output/best', 'ab')
+pickle.dump(sortedPopulation[0], dbfile)
+dbfile.close()
+
+# * Import from file
+# dbfile = open('best2', 'rb')
+# schedules = pickle.load(dbfile)
+# dbfile.close()
+
+# s1, s2 = performCrossover(schedules[0], schedules[1])
+
+
+# schedule = schedules[1]
+
+# # s1.print()
+# s1.printSemesterCollisions()
+# s1.printTeacherCollisions()
+# s1.printAvailabilityCollisions()
+# s1.printScore()
+
+# # s2.print()
+# s2.printSemesterCollisions()
+# s2.printTeacherCollisions()
+# s2.printAvailabilityCollisions()
+# s1.printScore()
+# s2.printScore()
