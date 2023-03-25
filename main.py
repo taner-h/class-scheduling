@@ -175,6 +175,12 @@ class Schedule:
         for index in self.departmentMeetingViolations:
             print(f'Bölüm Toplantısı İhlali: {index}')
 
+    def printHardConstraintViolations(self):
+        print('\n\n---------- HARD CONSTRAINT VIOLATIONS ----------\n')
+        self.printSemesterCollisions()
+        self.printTeacherCollisions()
+        self.printBreakHourViolations()
+
     def printAvailabilityCollisions(self):
         print(
             f'\n\n----- Uygunluk Cakismalari ({len(self.teacherAvailabilityViolations)}) -----\n')
@@ -317,71 +323,8 @@ class Schedule:
                     collisions.append(collisionSessions)
         return collisions
 
-    def calculateBreakHourViolations(self):
-        totalViolations = []
-        semesterIndex = 0
-        for semester in self.semesters:
-            for day in [0, 1, 3]:
-                sessionsOfDay = list(filter(
-                    lambda session: session.day == day, semester))
-                usedSlots = []
-                for session in sessionsOfDay:
-                    usedSlots.extend(
-                        list(range(session.hour, session.hour + session.length)))
-                if 12 in usedSlots and 13 in usedSlots:
-                    totalViolations.append((semesterIndex, day))
-                    # print(f'VIOLATION = {semesterIndex}, {getDayName(day)}')
-            semesterIndex += 1
-        return totalViolations
-
-    def calculateDepartmentMeetingViolations(self):
-        totalViolations = []
-        semesterIndex = 0
-        day = 2
-        for semester in self.semesters:
-            sessionsOfDay = list(filter(
-                lambda session: session.day == day, semester))
-            usedSlots = []
-            for session in sessionsOfDay:
-                usedSlots.extend(
-                    list(range(session.hour, session.hour + session.length)))
-            if 13 in usedSlots:
-                totalViolations.append(semesterIndex)
-            semesterIndex += 1
-        return totalViolations
-
-    def calculateFridayBreakViolations(self):
-        totalViolations = []
-        semesterIndex = 0
-        day = 4
-        for semester in self.semesters:
-            sessionsOfDay = list(filter(
-                lambda session: session.day == day, semester))
-            usedSlots = []
-            for session in sessionsOfDay:
-                usedSlots.extend(
-                    list(range(session.hour, session.hour + session.length)))
-            if 12 in usedSlots or 13 in usedSlots:
-                totalViolations.append(semesterIndex)
-            semesterIndex += 1
-        return totalViolations
-
     def hasAllSessions(self):
         return len(self.state) == 87
-
-    def calculateFreeDays(self):
-        totalFreeDays = []
-        for index, semester in enumerate(self.semesters):
-            for day in range(5):
-                sessionsOfDay = list(filter(
-                    lambda session: session.day == day, semester))
-                usedSlots = []
-                for session in sessionsOfDay:
-                    usedSlots.extend(
-                        list(range(session.hour, session.hour + session.length)))
-                if len(usedSlots) == 0 and day not in [1, 2]:
-                    totalFreeDays.append(index)
-        return totalFreeDays
 
     def calculateConstraints(self):
         breakViolations = []
@@ -471,7 +414,7 @@ class Schedule:
                         list(range(session.hour, session.hour + session.length)))
 
     def calculateFitness(self):
-        #! Hard Constraints
+        # ! Hard Constraints
         semesterCollisionCount = len(self.semesterCollisions)
         languageSessionViolationCount = len(self.languageSessionViolations)
         teacherCollisionCount = len(self.teacherCollisions)
@@ -502,10 +445,10 @@ class Schedule:
             languageSessionViolationCount
 
         score -= 0.5 * teacherAvailabilityViolationCount
-        score += 2 * freeDayCount
         score -= 0.3 * singleSessionDayCount
         score -= 0.5 * multipleCourseSessionCount
         score -= 0.1 * (slotSpan - 210)
+        score += 2 * freeDayCount
 
         if (hardConstraintsTotal):
             score -= 0.1 * score
@@ -650,9 +593,6 @@ def performCrossover(schedule1, schedule2):
     index = random.choice(range(8))
     schedule1.semesters[index], schedule2.semesters[index] = schedule2.semesters[index], schedule1.semesters[index]
 
-    # schedule1.print()
-    # schedule2.print()
-
     newSchedule1 = Schedule(getStateFromSemesters(schedule1))
     newSchedule2 = Schedule(getStateFromSemesters(schedule2))
 
@@ -681,7 +621,21 @@ def crossover(population):
     return newPopulation
 
 
+def exportSchedule(schedule, name='latest'):
+    dbfile = open(f'output/{name}', 'ab')
+    pickle.dump(schedule, dbfile)
+    dbfile.close()
+
+
+def importSchedule(name='latest'):
+    dbfile = open(f'output/{name}', 'rb')
+    schedule = pickle.load(dbfile)
+    dbfile.close()
+    return schedule
+
+
 SIZE = 32
+LIMIT = 32
 
 teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
@@ -711,7 +665,7 @@ availableSlots = calculateAvailableSlots()
 # schedule.printSemesterCollisions()
 
 population = generatePopulation(SIZE)
-for i in range(10):
+for i in range(LIMIT):
     sortedPopulation = sorted(
         population, key=lambda schedule: schedule.fitness, reverse=True)
     print(f'\n ITERATION {i + 1}')
@@ -732,11 +686,11 @@ best = sortedPopulation[0]
 
 best.print()
 best.printAvailableSlots()
-best.printSemesterCollisions()
-best.printTeacherCollisions()
-best.printBreakHourViolations()
+best.printHardConstraintViolations()
 best.printAvailabilityCollisions()
 best.printScore()
+
+# performMutation(importSchedule())
 
 # ? Export to file
 # dbfile = open('output/best', 'ab')
