@@ -438,7 +438,7 @@ class Schedule:
         score -= 2 * (semesterCollisionCount + teacherCollisionCount +
                       multiTeacherCollisionCount + languageSessionViolationCount)
         score -= 3 * (fridayBreakViolationCount +
-                      departmentMeetingViolationCount + departmentMeetingViolationCount)
+                      breakHourViolationCount + departmentMeetingViolationCount)
 
         hardConstraintsTotal = semesterCollisionCount + teacherCollisionCount + multiTeacherCollisionCount + fridayBreakViolationCount + \
             breakHourViolationCount + departmentMeetingViolationCount + \
@@ -608,7 +608,8 @@ def getStateFromSemesters(schedule):
 
 
 def selection(population):
-    scores = [schedule.fitness for schedule in population]
+    scores = [
+        10 * schedule.fitness if schedule.isValid else schedule.fitness for schedule in population]
     return random.choices(population, scores, k=SIZE)
 
 
@@ -618,6 +619,66 @@ def crossover(population):
         newSchedules = performCrossover(
             population[index * 2], population[index * 2 + 1])
         newPopulation.extend(newSchedules)
+    return newPopulation
+
+
+def performMutation(schedule):
+    performed = False
+    count = 0
+    while not performed and count <= 10:
+        # semester = random.randint(0, 7)
+        # day = random.randint(0, 4)
+        if schedule.breakHourViolations:
+            semester, day = random.choice(schedule.breakHourViolations)
+        else:
+            return schedule
+        availableSlotsOfDay = schedule.availableSlots[semester][day]
+        morningSlots = [
+            slot for slot in availableSlotsOfDay if slot in [9, 10, 11]]
+        eveningSlots = [
+            slot for slot in availableSlotsOfDay if slot in [14, 15, 16, 17]]
+
+        sessionsOfDay = list(filter(
+            lambda session: session.day == day, schedule.semesters[semester]))
+        startTime = [session.hour for session in sessionsOfDay]
+        morningPossible = []
+        eveningPossible = []
+        if sum(morningSlots):
+            morningPossible = [slot for slot in range(
+                morningSlots[0], 13) if slot in startTime]
+        if sum(eveningSlots):
+            eveningPossible = [slot for slot in range(
+                12, eveningSlots[-1] + 1) if slot in startTime]
+
+        period = random.randint(0, 1)
+        if period == 0 and morningPossible:
+            toMutate = [
+                session for session in sessionsOfDay if session.hour in morningPossible]
+            for session in toMutate:
+                if session.hour > 9:
+                    session.hour -= 1
+            return Schedule(schedule.state)
+
+        if period == 1 and eveningPossible:
+            toMutate = [
+                session for session in sessionsOfDay if session.hour in eveningPossible]
+            for session in toMutate:
+                if session.hour + session.length < 18:
+                    session.hour += 1
+            return Schedule(schedule.state)
+
+        count += 1
+    return schedule
+
+
+def mutation(population):
+    newPopulation = []
+    for schedule in population:
+        willMutate = random.choices([True, False], [0.1, 0.9], k=1)
+        if willMutate:
+            newPopulation.append(performMutation(schedule))
+        else:
+            newPopulation.append(schedule)
     return newPopulation
 
 
@@ -635,7 +696,7 @@ def importSchedule(name='latest'):
 
 
 SIZE = 32
-LIMIT = 32
+LIMIT = 100
 
 teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
@@ -678,6 +739,7 @@ for i in range(LIMIT):
 
     selected = selection(population)
     population = crossover(selected)
+    population = mutation(population)
 
 sortedPopulation = sorted(
     population, key=lambda schedule: schedule.fitness, reverse=True)
@@ -690,17 +752,8 @@ best.printHardConstraintViolations()
 best.printAvailabilityCollisions()
 best.printScore()
 
-# performMutation(importSchedule())
+# exportSchedule(best)
 
-# ? Export to file
-# dbfile = open('output/best', 'ab')
-# pickle.dump(sortedPopulation[0], dbfile)
-# dbfile.close()
-
-# * Import from file
-# dbfile = open('best2', 'rb')
-# schedules = pickle.load(dbfile)
-# dbfile.close()
 
 # s1, s2 = performCrossover(schedules[0], schedules[1])
 
