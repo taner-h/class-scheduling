@@ -73,6 +73,7 @@ class Schedule:
         self.multipleCourseSessions = results[6]
         self.slotSpan = results[7]
         self.availableSlots = results[8]
+        self.allSlotsUsedDays = self.calculateAllSlotsUsedDays()
 
         isValid, fitness = self.calculateFitness()
         self.fitness = fitness
@@ -118,6 +119,10 @@ class Schedule:
             if sessionsOfTeacher[0].teacher.firstName != "":
                 print(
                     f'\n\n----- {sessionsOfTeacher[0].teacher.firstName} {sessionsOfTeacher[0].teacher.lastName} -----\n')
+                if sessionsOfTeacher[0].teacher.id in multiTeachers:
+                    multiTeacherSession = [
+                        session for session in self.state if session.course.id == multiTeacherCourseId][0]
+                    sessionsOfTeacher.append(multiTeacherSession)
                 for day in range(5):
                     sessionsOfDay = list(filter(
                         lambda session: session.day == day, sessionsOfTeacher))
@@ -198,7 +203,7 @@ class Schedule:
             for index, day in enumerate(semester):
                 print(f'{getDayName(index)}: {day}', end=', ')
 
-    def printScore(self):
+    def printFitness(self):
         print(f'fitness: {round(self.fitness, 2)} (isValid: {self.isValid})')
 
     def calculateSemesterCollisions(self):
@@ -326,6 +331,14 @@ class Schedule:
     def hasAllSessions(self):
         return len(self.state) == 87
 
+    def calculateAllSlotsUsedDays(self):
+        allSlotsUsedDays = []
+        for semesterIndex, semester in enumerate(self.availableSlots):
+            for index, day in enumerate(semester):
+                if not day and index in [0, 1, 3]:
+                    allSlotsUsedDays.append((semesterIndex, index))
+        return allSlotsUsedDays
+
     def calculateConstraints(self):
         breakViolations = []
         meetingViolations = []
@@ -422,6 +435,7 @@ class Schedule:
         breakHourViolationCount = len(self.breakHourViolations)
         fridayBreakViolationCount = len(self.fridayBreakViolations)
         departmentMeetingViolationCount = len(self.departmentMeetingViolations)
+        allSlotsUsedDaysCount = len(self.allSlotsUsedDays)
 
         # ? Soft Constraints
         teacherAvailabilityViolationCount = len(
@@ -439,10 +453,11 @@ class Schedule:
                       multiTeacherCollisionCount + languageSessionViolationCount)
         score -= 3 * (fridayBreakViolationCount +
                       breakHourViolationCount + departmentMeetingViolationCount)
+        score -= 3 * allSlotsUsedDaysCount
 
         hardConstraintsTotal = semesterCollisionCount + teacherCollisionCount + multiTeacherCollisionCount + fridayBreakViolationCount + \
             breakHourViolationCount + departmentMeetingViolationCount + \
-            languageSessionViolationCount
+            languageSessionViolationCount + allSlotsUsedDaysCount
 
         score -= 0.5 * teacherAvailabilityViolationCount
         score -= 0.3 * singleSessionDayCount
@@ -609,7 +624,8 @@ def getStateFromSemesters(schedule):
 
 def selection(population):
     scores = [
-        10 * schedule.fitness if schedule.isValid else schedule.fitness for schedule in population]
+        # 10 * schedule.fitness if schedule.isValid else
+        max(schedule.fitness, 0) for schedule in population]
     return random.choices(population, scores, k=SIZE)
 
 
@@ -696,7 +712,7 @@ def importSchedule(name='latest'):
 
 
 SIZE = 32
-LIMIT = 100
+LIMIT = 50
 
 teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
@@ -710,7 +726,7 @@ availableSlots = calculateAvailableSlots()
 # schedule.printSemesterCollisions()
 # schedule.printTeacherCollisions()
 # schedule.printAvailabilityCollisions()
-# schedule.printScore()
+# schedule.printFitness()
 
 # * Checking multi-teacher session
 # print(multiTeacherCourseId)
@@ -731,14 +747,14 @@ for i in range(LIMIT):
         population, key=lambda schedule: schedule.fitness, reverse=True)
     print(f'\n ITERATION {i + 1}')
     for schedule in sortedPopulation:
-        schedule.printScore()
+        schedule.printFitness()
 
     average = sum([schedule.fitness for schedule in sortedPopulation]
                   ) / len(sortedPopulation)
     print(f'\nAverage: {average}\n')
 
-    selected = selection(population)
-    population = crossover(selected)
+    population = selection(population)
+    population = crossover(population)
     population = mutation(population)
 
 sortedPopulation = sorted(
@@ -747,10 +763,15 @@ sortedPopulation = sorted(
 best = sortedPopulation[0]
 
 best.print()
+best.printTeacherSessions()
 best.printAvailableSlots()
 best.printHardConstraintViolations()
 best.printAvailabilityCollisions()
-best.printScore()
+best.printFitness()
+
+title = f'{round(best.fitness, 2)}, {LIMIT}, {SIZE}'
+exportSchedule(best, name=title)
+
 
 # exportSchedule(best)
 
@@ -764,11 +785,20 @@ best.printScore()
 # s1.printSemesterCollisions()
 # s1.printTeacherCollisions()
 # s1.printAvailabilityCollisions()
-# s1.printScore()
+# s1.printFitness()
 
 # # s2.print()
 # s2.printSemesterCollisions()
 # s2.printTeacherCollisions()
 # s2.printAvailabilityCollisions()
-# s1.printScore()
-# s2.printScore()
+# s1.printFitness()
+# s2.printFitness()
+
+
+# best = importSchedule(name='33.48, 50, 32')
+# best.print()
+# best.printTeacherSessions()
+# best.printAvailableSlots()
+# best.printHardConstraintViolations()
+# best.printAvailabilityCollisions()
+# best.printFitness()
