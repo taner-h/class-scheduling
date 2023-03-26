@@ -769,29 +769,55 @@ def importSchedule(name='latest', info=False):
     return schedule
 
 
-def evolution(size, limit, population):
-    for i in range(LIMIT):
-        sortedPopulation = sorted(
-            population, key=lambda schedule: schedule.fitness, reverse=True)
-        print(f'\n ITERATION {i + 1}')
-        for schedule in sortedPopulation:
-            schedule.printFitness()
-        average = sum([schedule.fitness for schedule in sortedPopulation]
-                      ) / len(sortedPopulation)
-        print(f'\nAverage: {average}\n')
-
-        population = selection(population)
-        # population = crossover(population)
-        population = mutation(population)
-
+def printInitilaPopulationFitness(population):
     sortedPopulation = sorted(
         population, key=lambda schedule: schedule.fitness, reverse=True)
+    print(f'\n INITIAL POPULATION')
+    for schedule in sortedPopulation:
+        schedule.printFitness()
+    average = sum([schedule.fitness for schedule in sortedPopulation]
+                  ) / len(sortedPopulation)
+    print(f'Average: {average}')
 
-    best = sortedPopulation[0]
-    exportSchedule(best, name=f'{round(best.fitness, 2)}, {LIMIT}, {SIZE}')
-    best.printInfo()
 
-    return best
+def printPopulationFitness(population, index):
+
+    print(f'\nITERATION {index + 1}')
+    # for schedule in sortedPopulation:
+    #     schedule.printFitness()
+    population[0].printFitness()
+    average = sum([schedule.fitness for schedule in population]
+                  ) / len(population)
+    print(f'Average: {average}')
+
+
+def evolution(size, limit, population):
+    bestScore = 0
+    bestSoFar = None
+
+    printInitilaPopulationFitness(population)
+
+    for i in range(LIMIT):
+        population = selection(population)
+        population = crossover(population)
+        population = mutation(population)
+
+        sortedPopulation = sorted(
+            population, key=lambda schedule: schedule.fitness, reverse=True)
+
+        printPopulationFitness(sortedPopulation, i)
+
+        bestOfGeneration = sortedPopulation[0]
+
+        if bestOfGeneration.fitness > bestScore:
+            bestScore = bestOfGeneration.fitness
+            bestSoFar = bestOfGeneration
+
+    exportSchedule(
+        bestSoFar, name=f'{round(bestSoFar.fitness, 2)}, {LIMIT}, {SIZE}')
+    bestSoFar.printInfo()
+
+    return bestSoFar
 
 
 SIZE = 64
@@ -801,8 +827,6 @@ teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
 multiTeacherCourseId, multiTeachers = getMultiTeacherCourse()
 availableSlots = calculateAvailableSlots()
-# population = generatePopulation(SIZE)
-# best = evolution(SIZE, LIMIT, population)
-
-imported = importSchedule(name='Problem2', info=True)
-# imported.printSemesterCollisions()
+population = generatePopulation(SIZE)
+best = evolution(SIZE, LIMIT, population)
+# imported = importSchedule(name='Problem2', info=True)
