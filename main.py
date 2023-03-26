@@ -180,11 +180,61 @@ class Schedule:
         for index in self.departmentMeetingViolations:
             print(f'Bölüm Toplantısı İhlali: {index}')
 
+    def printFreeDays(self):
+        print(f'\n\n----- Boş Günler ({len(self.freeDays)})-----\n')
+        for semester, day in self.freeDays:
+            print(
+                f'{getSemesterShortName(semester)}, {getDayName(day)}')
+
+    def printAllSlotsUsedDays(self):
+        print(
+            f'\n\n----- Tüm Slotları Kullanılan Günler ({len(self.allSlotsUsedDays)})-----\n')
+        for semester, day in self.allSlotsUsedDays:
+            print(
+                f'{getSemesterShortName(semester)}, {getDayName(day)}')
+
+    def printSingleSessionDays(self):
+        print(
+            f'\n\n----- Tek Seanslı Günler ({len(self.singleSessionDays)})-----\n')
+        for semester, day in self.singleSessionDays:
+            print(
+                f'Single Session Day: {getSemesterShortName(semester)}, {getDayName(day)}')
+
+    def printMultipleCourseSessions(self):
+        print(
+            f'\n\n----- Günde Birden Fazla Seanslı Dersler ({len(self.multipleCourseSessions)})-----\n')
+        for course in self.multipleCourseSessions:
+            for session in course:
+                print(
+                    f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+            print()
+
+    def printSlotSpan(self):
+        print(
+            f'\n\n----- Toplam Slot Açıklığı({sum([sum(semesterSlotSpan) for semesterSlotSpan in self.slotSpan])})-----\n')
+
     def printHardConstraintViolations(self):
         print('\n\n---------- HARD CONSTRAINT VIOLATIONS ----------\n')
         self.printSemesterCollisions()
         self.printTeacherCollisions()
         self.printBreakHourViolations()
+
+    def printSoftContraints(self):
+        print('\n\n---------- SOFT CONSTRAINT VIOLATIONS ----------\n')
+        self.printAvailabilityCollisions()
+        self.printFreeDays()
+        self.printAllSlotsUsedDays()
+        self.printSingleSessionDays()
+        self.printMultipleCourseSessions()
+        self.printSlotSpan()
+
+    def printInfo(self):
+        self.print()
+        self.printTeacherSessions()
+        self.printAvailableSlots()
+        self.printHardConstraintViolations()
+        self.printSoftContraints()
+        self.printFitness()
 
     def printAvailabilityCollisions(self):
         print(
@@ -204,7 +254,8 @@ class Schedule:
                 print(f'{getDayName(index)}: {day}', end=', ')
 
     def printFitness(self):
-        print(f'fitness: {round(self.fitness, 2)} (isValid: {self.isValid})')
+        print(
+            f'fitness: {round(self.fitness, 2)} (isValid: {self.isValid})')
 
     def calculateSemesterCollisions(self):
         collisions = []
@@ -364,7 +415,7 @@ class Schedule:
                 semesterAvailableSlots[day] = [
                     slot for slot in semesterAvailableSlots[day] if slot not in usedSlots]
                 # Check for break violations:
-                if day in [0, 1, 4] and (12 in usedSlots and 13 in usedSlots):
+                if day in [0, 1, 3] and (12 in usedSlots and 13 in usedSlots):
                     breakViolations.append((index, day))
                 # Check for free days
                 if len(usedSlots) == 0 and day not in [1, 2]:
@@ -478,6 +529,12 @@ class Schedule:
 def getSemesterName(department, year):
     departmentName = 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
     return f"{departmentName} - {year}. Sınıf"
+
+
+def getSemesterShortName(semester):
+    department = 'BM' if semester // 4 == 0 else 'EM'
+    year = semester % 4 + 1
+    return f'{department}-{year}'
 
 
 def getDepartmentName(department):
@@ -704,10 +761,12 @@ def exportSchedule(schedule, name='latest'):
     dbfile.close()
 
 
-def importSchedule(name='latest'):
+def importSchedule(name='latest', info=False):
     dbfile = open(f'output/{name}', 'rb')
     schedule = pickle.load(dbfile)
     dbfile.close()
+    if info:
+        schedule.printInfo()
     return schedule
 
 
@@ -718,30 +777,8 @@ teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
 multiTeacherCourseId, multiTeachers = getMultiTeacherCourse()
 availableSlots = calculateAvailableSlots()
-
-
-# schedule = generateRandomSchedule()
-# # schedule.printTeacherSessions()
-# schedule.print()
-# schedule.printSemesterCollisions()
-# schedule.printTeacherCollisions()
-# schedule.printAvailabilityCollisions()
-# schedule.printFitness()
-
-# * Checking multi-teacher session
-# print(multiTeacherCourseId)
-# print(multiTeachers)
-
-# * Checking for collisions
-# schedule.state[0].day = 0
-# schedule.state[0].hour = 9
-# schedule.state[0].length = 8
-# schedule.print()
-# schedule.semesterCollisions = schedule.calculateSemesterCollisions()
-# schedule.languageSessionViolations = schedule.calculateConstraints()[3]
-# schedule.printSemesterCollisions()
-
 population = generatePopulation(SIZE)
+
 for i in range(LIMIT):
     sortedPopulation = sorted(
         population, key=lambda schedule: schedule.fitness, reverse=True)
@@ -761,44 +798,10 @@ sortedPopulation = sorted(
     population, key=lambda schedule: schedule.fitness, reverse=True)
 
 best = sortedPopulation[0]
-
-best.print()
-best.printTeacherSessions()
-best.printAvailableSlots()
-best.printHardConstraintViolations()
-best.printAvailabilityCollisions()
-best.printFitness()
+best.printInfo()
 
 title = f'{round(best.fitness, 2)}, {LIMIT}, {SIZE}'
 exportSchedule(best, name=title)
 
 
-# exportSchedule(best)
-
-
-# s1, s2 = performCrossover(schedules[0], schedules[1])
-
-
-# schedule = schedules[1]
-
-# # s1.print()
-# s1.printSemesterCollisions()
-# s1.printTeacherCollisions()
-# s1.printAvailabilityCollisions()
-# s1.printFitness()
-
-# # s2.print()
-# s2.printSemesterCollisions()
-# s2.printTeacherCollisions()
-# s2.printAvailabilityCollisions()
-# s1.printFitness()
-# s2.printFitness()
-
-
-# best = importSchedule(name='33.48, 50, 32')
-# best.print()
-# best.printTeacherSessions()
-# best.printAvailableSlots()
-# best.printHardConstraintViolations()
-# best.printAvailabilityCollisions()
-# best.printFitness()
+# imported = importSchedule(name='33.48, 50, 32', info=True)
