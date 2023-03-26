@@ -78,6 +78,7 @@ class Schedule:
         isValid, fitness = self.calculateFitness()
         self.fitness = fitness
         self.isValid = isValid
+        self.hasAllSessions = self.calculateHasAllSessions()
 
     def filterSemesters(self):
         semesters = []
@@ -143,11 +144,9 @@ class Schedule:
                     f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
             print()
 
-        for collision in self.languageSessionViolations:
-            for index, day in collision:
-                print(
-                    f'{getDayName(day)}: 16.00 - 18.00 - Yabancı Dil ({index})')
-            print()
+        for index, day in self.languageSessionViolations:
+            print(
+                f'{getDayName(day)}: 16.00 - 18.00 - Yabancı Dil ({index})')
 
     def printTeacherCollisions(self):
         print(
@@ -181,28 +180,28 @@ class Schedule:
             print(f'Bölüm Toplantısı İhlali: {index}')
 
     def printFreeDays(self):
-        print(f'\n\n----- Boş Günler ({len(self.freeDays)})-----\n')
+        print(f'\n\n----- Boş Günler ({len(self.freeDays)}) -----\n')
         for semester, day in self.freeDays:
             print(
                 f'{getSemesterShortName(semester)}, {getDayName(day)}')
 
     def printAllSlotsUsedDays(self):
         print(
-            f'\n\n----- Tüm Slotları Kullanılan Günler ({len(self.allSlotsUsedDays)})-----\n')
+            f'\n\n----- Tüm Slotları Kullanılan Günler ({len(self.allSlotsUsedDays)}) -----\n')
         for semester, day in self.allSlotsUsedDays:
             print(
                 f'{getSemesterShortName(semester)}, {getDayName(day)}')
 
     def printSingleSessionDays(self):
         print(
-            f'\n\n----- Tek Seanslı Günler ({len(self.singleSessionDays)})-----\n')
+            f'\n\n----- Tek Seanslı Günler ({len(self.singleSessionDays)}) -----\n')
         for semester, day in self.singleSessionDays:
             print(
                 f'Single Session Day: {getSemesterShortName(semester)}, {getDayName(day)}')
 
     def printMultipleCourseSessions(self):
         print(
-            f'\n\n----- Günde Birden Fazla Seanslı Dersler ({len(self.multipleCourseSessions)})-----\n')
+            f'\n\n----- Günde Birden Fazla Seanslı Dersler ({len(self.multipleCourseSessions)}) -----\n')
         for course in self.multipleCourseSessions:
             for session in course:
                 print(
@@ -218,12 +217,12 @@ class Schedule:
         self.printSemesterCollisions()
         self.printTeacherCollisions()
         self.printBreakHourViolations()
+        self.printAllSlotsUsedDays()
 
     def printSoftContraints(self):
         print('\n\n---------- SOFT CONSTRAINT VIOLATIONS ----------\n')
         self.printAvailabilityCollisions()
         self.printFreeDays()
-        self.printAllSlotsUsedDays()
         self.printSingleSessionDays()
         self.printMultipleCourseSessions()
         self.printSlotSpan()
@@ -379,7 +378,7 @@ class Schedule:
                     collisions.append(collisionSessions)
         return collisions
 
-    def hasAllSessions(self):
+    def calculateHasAllSessions(self):
         return len(self.state) == 87
 
     def calculateAllSlotsUsedDays(self):
@@ -770,38 +769,40 @@ def importSchedule(name='latest', info=False):
     return schedule
 
 
-SIZE = 32
+def evolution(size, limit, population):
+    for i in range(LIMIT):
+        sortedPopulation = sorted(
+            population, key=lambda schedule: schedule.fitness, reverse=True)
+        print(f'\n ITERATION {i + 1}')
+        for schedule in sortedPopulation:
+            schedule.printFitness()
+        average = sum([schedule.fitness for schedule in sortedPopulation]
+                      ) / len(sortedPopulation)
+        print(f'\nAverage: {average}\n')
+
+        population = selection(population)
+        # population = crossover(population)
+        population = mutation(population)
+
+    sortedPopulation = sorted(
+        population, key=lambda schedule: schedule.fitness, reverse=True)
+
+    best = sortedPopulation[0]
+    exportSchedule(best, name=f'{round(best.fitness, 2)}, {LIMIT}, {SIZE}')
+    best.printInfo()
+
+    return best
+
+
+SIZE = 64
 LIMIT = 50
 
 teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
 multiTeacherCourseId, multiTeachers = getMultiTeacherCourse()
 availableSlots = calculateAvailableSlots()
-population = generatePopulation(SIZE)
+# population = generatePopulation(SIZE)
+# best = evolution(SIZE, LIMIT, population)
 
-for i in range(LIMIT):
-    sortedPopulation = sorted(
-        population, key=lambda schedule: schedule.fitness, reverse=True)
-    print(f'\n ITERATION {i + 1}')
-    for schedule in sortedPopulation:
-        schedule.printFitness()
-
-    average = sum([schedule.fitness for schedule in sortedPopulation]
-                  ) / len(sortedPopulation)
-    print(f'\nAverage: {average}\n')
-
-    population = selection(population)
-    population = crossover(population)
-    population = mutation(population)
-
-sortedPopulation = sorted(
-    population, key=lambda schedule: schedule.fitness, reverse=True)
-
-best = sortedPopulation[0]
-best.printInfo()
-
-title = f'{round(best.fitness, 2)}, {LIMIT}, {SIZE}'
-exportSchedule(best, name=title)
-
-
-# imported = importSchedule(name='33.48, 50, 32', info=True)
+imported = importSchedule(name='Problem2', info=True)
+# imported.printSemesterCollisions()
