@@ -197,7 +197,7 @@ class Schedule:
             f'\n\n----- Tek Seanslı Günler ({len(self.singleSessionDays)}) -----\n')
         for semester, day in self.singleSessionDays:
             print(
-                f'Single Session Day: {getSemesterShortName(semester)}, {getDayName(day)}')
+                f'{getSemesterShortName(semester)}, {getDayName(day)}')
 
     def printMultipleCourseSessions(self):
         print(
@@ -205,7 +205,7 @@ class Schedule:
         for course in self.multipleCourseSessions:
             for session in course:
                 print(
-                    f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+                    f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getSemesterShortName((4 * session.course.department + session.course.year) - 1)})')
             print()
 
     def printSlotSpan(self):
@@ -404,8 +404,10 @@ class Schedule:
             semesterSlotSpan = []
             semesterAvailableSlots = calculateAvailableSlots()
             for day in range(5):
-                sessionsOfDay = list(filter(
-                    lambda session: session.day == day, semester))
+                # sessionsOfDay = list(filter(
+                #     lambda session: session.day == day, semester))
+                sessionsOfDay = [
+                    session for session in semester if session.day == day]
                 usedSlots = []
                 for session in sessionsOfDay:
                     usedSlots.extend(
@@ -430,9 +432,9 @@ class Schedule:
                     languageSessionViolations.append((index, day))
                 # Check for single-session days
                 if len(sessionsOfDay) == 1 and day in [0, 3, 4]:
-                    singleSessionDays.append((index, day))
-                if len(sessionsOfDay) == 0 and day in [1, 2]:
-                    singleSessionDays.append((index, day))
+                    singleSessionDays.append([index, day])
+                elif len(sessionsOfDay) == 0 and day in [1, 2]:
+                    singleSessionDays.append([index, day])
                 # Check for multiple sessions of same course in the same day
                 courseIds = [session.course.id for session in sessionsOfDay]
                 multipleSessionCourseIds = [
@@ -696,11 +698,13 @@ def crossover(population):
 
 
 def performMutation(schedule):
-    mutation = random.choice(range(2))
+    mutation = random.choice(range(3))
     if mutation == 0:
         return mutateByMovingPeriod(schedule)
     if mutation == 1:
         return mutateBySwapingSessions(schedule)
+    if mutation == 2:
+        return mutateByMovingSession(schedule)
 
 
 def mutateByMovingPeriod(schedule):
@@ -761,7 +765,7 @@ def mutateBySwapingSessions(schedule):
         return schedule
 
     for collidedSession in collision:
-        swapableSessions = [session for session in schedule.state if isOkayToSwap(
+        swapableSessions = [session for session in schedule.state if isSafeToSwapTeacherCollision(
             session, collidedSession)]
         if swapableSessions:
             sessionToSwap = random.choice(swapableSessions)
@@ -775,7 +779,7 @@ def mutateBySwapingSessions(schedule):
     return schedule
 
 
-def isOkayToSwap(session, collidedSession):
+def isSafeToSwapTeacherCollision(session, collidedSession):
     if session.course.id != collidedSession.course.id and \
             session.teacher.id != collidedSession.teacher.id and \
             session.course.year == collidedSession.course.year and \
@@ -784,6 +788,53 @@ def isOkayToSwap(session, collidedSession):
         return True
     else:
         return False
+
+
+def mutateByMovingSession(schedule):
+    # schedule.print()
+    # schedule.printSingleSessionDays()
+
+    if schedule.singleSessionDays:
+        semesterIndex, day = random.choice(schedule.singleSessionDays)
+    else:
+        return schedule
+
+    semester = schedule.semesters[semesterIndex]
+    if day in [1, 2]:
+        return schedule
+
+    sessions = [session for session in semester if session.day == day]
+    if len(sessions) == 0:
+        return schedule
+    session = sessions[0]
+    availableSlots = schedule.availableSlots[semesterIndex]
+
+    length = session.length
+    possibleSlots = []
+    if length == 2:
+        for availableSlotsOfDay in availableSlots:
+            possibleSlots.append([
+                slot for slot in availableSlotsOfDay if slot + 1 in availableSlotsOfDay])
+    if length == 3:
+        for availableSlotsOfDay in availableSlots:
+            possibleSlots.append([slot for slot in availableSlotsOfDay if slot +
+                                 1 in availableSlotsOfDay and slot + 2 in availableSlotsOfDay])
+    allPossibleDays = []
+    for day, daySlots in enumerate(possibleSlots):
+        if daySlots:
+            allPossibleDays.append(day)
+
+    chosenDay = random.choice(allPossibleDays)
+    chosenSlot = random.choice(possibleSlots[chosenDay])
+
+    session.day = chosenDay
+    session.hour = chosenSlot
+
+    newSchedule = Schedule(schedule.state)
+    # newSchedule.print()
+    # newSchedule.printSingleSessionDays()
+
+    return newSchedule
 
 
 def mutation(population):
@@ -839,6 +890,7 @@ def evolution(size, limit, population):
     bestSoFar = None
 
     printInitilaPopulationFitness(population)
+    mutateByMovingSession(population[0])
 
     for i in range(LIMIT):
         population = selection(population)
