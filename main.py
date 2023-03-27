@@ -47,7 +47,7 @@ class Session:
             f"{self.id}: {self.name} ({self.length}), {self.teacher.firstName} {self.teacher.lastName}")
 
     def printSchedule(self):
-        print(f"{self.id}: {self.name}, {getDayName(self.day)} {self.hour}.00 - {session.hour + session.length}.00")
+        print(f"{self.id}: {self.name}, {getDayName(self.day)} {self.hour}.00 - {self.hour + self.length}.00 ({getSemesterShortName((4 * self.course.department + self.course.year) - 1)})")
 
 
 class Schedule:
@@ -512,7 +512,8 @@ class Schedule:
         score -= 0.5 * teacherAvailabilityViolationCount
         score -= 0.3 * singleSessionDayCount
         score -= 0.5 * multipleCourseSessionCount
-        score -= 0.1 * (slotSpan - 210)
+        # Total session length (210) + Total break hours (48)
+        score -= 0.1 * (slotSpan - 258)
         score += 2 * freeDayCount
 
         if (hardConstraintsTotal):
@@ -695,52 +696,94 @@ def crossover(population):
 
 
 def performMutation(schedule):
-    performed = False
-    count = 0
-    while not performed and count <= 10:
+    mutation = random.choice(range(2))
+    if mutation == 0:
+        return mutateByMovingPeriod(schedule)
+    if mutation == 1:
+        return mutateBySwapingSessions(schedule)
+
+
+def mutateByMovingPeriod(schedule):
+    if schedule.breakHourViolations:
+        semester, day = random.choice(schedule.breakHourViolations)
+    else:
         # semester = random.randint(0, 7)
         # day = random.randint(0, 4)
-        if schedule.breakHourViolations:
-            semester, day = random.choice(schedule.breakHourViolations)
-        else:
-            return schedule
-        availableSlotsOfDay = schedule.availableSlots[semester][day]
-        morningSlots = [
-            slot for slot in availableSlotsOfDay if slot in [9, 10, 11]]
-        eveningSlots = [
-            slot for slot in availableSlotsOfDay if slot in [14, 15, 16, 17]]
+        return schedule
+    availableSlotsOfDay = schedule.availableSlots[semester][day]
+    morningSlots = [
+        slot for slot in availableSlotsOfDay if slot in [9, 10, 11]]
+    eveningSlots = [
+        slot for slot in availableSlotsOfDay if slot in [14, 15, 16, 17]]
 
-        sessionsOfDay = list(filter(
-            lambda session: session.day == day, schedule.semesters[semester]))
-        startTime = [session.hour for session in sessionsOfDay]
-        morningPossible = []
-        eveningPossible = []
-        if sum(morningSlots):
-            morningPossible = [slot for slot in range(
-                morningSlots[0], 13) if slot in startTime]
-        if sum(eveningSlots):
-            eveningPossible = [slot for slot in range(
-                12, eveningSlots[-1] + 1) if slot in startTime]
+    sessionsOfDay = list(filter(
+        lambda session: session.day == day, schedule.semesters[semester]))
+    startTime = [session.hour for session in sessionsOfDay]
+    morningPossible = []
+    eveningPossible = []
+    if sum(morningSlots):
+        morningPossible = [slot for slot in range(
+            morningSlots[0], 13) if slot in startTime]
+    if sum(eveningSlots):
+        eveningPossible = [slot for slot in range(
+            12, eveningSlots[-1] + 1) if slot in startTime]
 
-        period = random.randint(0, 1)
-        if period == 0 and morningPossible:
-            toMutate = [
-                session for session in sessionsOfDay if session.hour in morningPossible]
-            for session in toMutate:
-                if session.hour > 9:
-                    session.hour -= 1
-            return Schedule(schedule.state)
+    period = random.randint(0, 1)
+    if period == 0 and morningPossible:
+        toMutate = [
+            session for session in sessionsOfDay if session.hour in morningPossible]
+        for session in toMutate:
+            if session.hour > 9:
+                session.hour -= 1
+        return Schedule(schedule.state)
 
-        if period == 1 and eveningPossible:
-            toMutate = [
-                session for session in sessionsOfDay if session.hour in eveningPossible]
-            for session in toMutate:
-                if session.hour + session.length < 18:
-                    session.hour += 1
-            return Schedule(schedule.state)
+    if period == 1 and eveningPossible:
+        toMutate = [
+            session for session in sessionsOfDay if session.hour in eveningPossible]
+        for session in toMutate:
+            if session.hour + session.length < 18:
+                session.hour += 1
+        return Schedule(schedule.state)
 
-        count += 1
     return schedule
+
+
+def mutateBySwapingSessions(schedule):
+    if schedule.teacherCollisions:
+        collision = random.choice(schedule.teacherCollisions)
+        # for session in collision:
+        #     session.printSchedule()
+        # schedule.print()
+        # schedule.printTeacherCollisions()
+    else:
+        # semester = random.randint(0, 7)
+        # day = random.randint(0, 4)
+        return schedule
+
+    for collidedSession in collision:
+        swapableSessions = [session for session in schedule.state if isOkayToSwap(
+            session, collidedSession)]
+        if swapableSessions:
+            sessionToSwap = random.choice(swapableSessions)
+            collidedSession.day, sessionToSwap.day = sessionToSwap.day, collidedSession.day
+            collidedSession.hour, sessionToSwap.hour = sessionToSwap.hour, collidedSession.hour
+            newSchedule = Schedule(schedule.state)
+            # newSchedule.print()
+            # newSchedule.printTeacherCollisions()
+            return newSchedule
+
+    return schedule
+
+
+def isOkayToSwap(session, collidedSession):
+    if session.course.id != collidedSession.course.id and \
+            session.teacher.id != collidedSession.teacher.id and \
+            session.course.year == collidedSession.course.year and \
+            session.course.department == collidedSession.course.department and \
+            session.length == collidedSession.length:
+        return True
+    else:
+        return False
 
 
 def mutation(population):
@@ -783,9 +826,9 @@ def printInitilaPopulationFitness(population):
 def printPopulationFitness(population, index):
 
     print(f'\nITERATION {index + 1}')
-    # for schedule in sortedPopulation:
-    #     schedule.printFitness()
-    population[0].printFitness()
+    for schedule in population:
+        schedule.printFitness()
+    # population[0].printFitness()
     average = sum([schedule.fitness for schedule in population]
                   ) / len(population)
     print(f'Average: {average}')
@@ -820,7 +863,7 @@ def evolution(size, limit, population):
     return bestSoFar
 
 
-SIZE = 64
+SIZE = 32
 LIMIT = 50
 
 teachers_json, courses_json, fixedSlots = importData()
