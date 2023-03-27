@@ -511,11 +511,11 @@ class Schedule:
             breakHourViolationCount + departmentMeetingViolationCount + \
             languageSessionViolationCount + allSlotsUsedDaysCount
 
-        score -= 0.5 * teacherAvailabilityViolationCount
+        score -= 0.4 * teacherAvailabilityViolationCount
         score -= 0.3 * singleSessionDayCount
-        score -= 0.5 * multipleCourseSessionCount
+        score -= 0.6 * multipleCourseSessionCount
         # Total session length (210) + Total break hours (48)
-        score -= 0.1 * (slotSpan - 258)
+        score -= 0.2 * (slotSpan - 258)
         score += 2 * freeDayCount
 
         if (hardConstraintsTotal):
@@ -698,13 +698,15 @@ def crossover(population):
 
 
 def performMutation(schedule):
-    mutation = random.choice(range(3))
+    mutation = random.choice(range(4))
     if mutation == 0:
         return mutateByMovingPeriod(schedule)
     if mutation == 1:
         return mutateBySwapingSessions(schedule)
     if mutation == 2:
         return mutateByMovingSession(schedule)
+    if mutation == 3:
+        return mutateBySwapingSessionsOfCourse(schedule)
 
 
 def mutateByMovingPeriod(schedule):
@@ -760,8 +762,6 @@ def mutateBySwapingSessions(schedule):
         # schedule.print()
         # schedule.printTeacherCollisions()
     else:
-        # semester = random.randint(0, 7)
-        # day = random.randint(0, 4)
         return schedule
 
     for collidedSession in collision:
@@ -837,6 +837,41 @@ def mutateByMovingSession(schedule):
     return newSchedule
 
 
+def mutateBySwapingSessionsOfCourse(schedule):
+    if schedule.multipleCourseSessions:
+        sessionsOfCourse = random.choice(schedule.multipleCourseSessions)
+        # for session in sessionsOfCourse:
+        #     session.printSchedule()
+        # schedule.print()
+        # schedule.printMultipleCourseSessions()
+    else:
+        return schedule
+
+    for sessionOfCourse in sessionsOfCourse:
+        swapableSessions = [session for session in schedule.state if isSafeToSwapMultipleSessions(
+            session, sessionOfCourse)]
+        if swapableSessions:
+            sessionToSwap = random.choice(swapableSessions)
+            sessionOfCourse.day, sessionToSwap.day = sessionToSwap.day, sessionOfCourse.day
+            sessionOfCourse.hour, sessionToSwap.hour = sessionToSwap.hour, sessionOfCourse.hour
+            newSchedule = Schedule(schedule.state)
+            # newSchedule.print()
+            # newSchedule.printMultipleCourseSessions()
+            return newSchedule
+
+    return schedule
+
+
+def isSafeToSwapMultipleSessions(session, sessionOfCourse):
+    if session.course.id != sessionOfCourse.course.id and \
+            session.course.year == sessionOfCourse.course.year and \
+            session.course.department == sessionOfCourse.course.department and \
+            session.length == sessionOfCourse.length:
+        return True
+    else:
+        return False
+
+
 def mutation(population):
     newPopulation = []
     for schedule in population:
@@ -890,7 +925,7 @@ def evolution(size, limit, population):
     bestSoFar = None
 
     printInitilaPopulationFitness(population)
-    mutateByMovingSession(population[0])
+    mutateBySwapingSessionsOfCourse(population[0])
 
     for i in range(LIMIT):
         population = selection(population)
@@ -915,7 +950,7 @@ def evolution(size, limit, population):
     return bestSoFar
 
 
-SIZE = 32
+SIZE = 64
 LIMIT = 50
 
 teachers_json, courses_json, fixedSlots = importData()
