@@ -8,12 +8,13 @@ from collections import Counter
 
 
 class Course:
-    def __init__(self, id, name, code, department, year):
+    def __init__(self, id, name, code, department, year, cannotCollideWith):
         self.id = id
         self.name = name
         self.code = code
         self.department = department
         self.year = year
+        self.cannotCollideWith = cannotCollideWith
 
     def print(self):
         print(f"{self.id}: {self.name} ({self.code}), {self.department}/{self.year}")
@@ -61,7 +62,7 @@ class Schedule:
         self.teacherCollisions = self.calculateTeacherCollisions()
         self.multiTeacherCollisions = self.calculateMultiTeacherSessionCollisions()
         self.teacherAvailabilityViolations = self.calculateTeacherAvailabilityViolations()
-
+        self.cannotCollideViolations = self.calculateCannotCollideViolations()
         results = self.calculateConstraints()
 
         self.breakHourViolations = results[0]
@@ -208,6 +209,16 @@ class Schedule:
                     f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name} ({getSemesterShortName((4 * session.course.department + session.course.year) - 1)})')
             print()
 
+    def printCannotCollideViolations(self):
+        print(
+            f'\n\n----- Çakışmaması Gereken Seans Çakışmaları ({len(self.cannotCollideViolations)}) -----\n')
+
+        for collision in self.cannotCollideViolations:
+            for session in collision:
+                print(
+                    f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
+            print()
+
     def printSlotSpan(self):
         print(
             f'\n\n----- Toplam Slot Açıklığı({sum([sum(semesterSlotSpan) for semesterSlotSpan in self.slotSpan])})-----\n')
@@ -225,6 +236,7 @@ class Schedule:
         self.printFreeDays()
         self.printSingleSessionDays()
         self.printMultipleCourseSessions()
+        self.printCannotCollideViolations()
         self.printSlotSpan()
 
     def printInfo(self):
@@ -378,6 +390,25 @@ class Schedule:
                     collisions.append(collisionSessions)
         return collisions
 
+    def calculateCannotCollideViolations(self):
+        violations = []
+        for session in self.state:
+            sessionSlots = list(
+                range(session.hour, session.hour + session.length))
+            sessionsToNotCollide = [
+                s for s in self.state if s.course.id in session.course.cannotCollideWith]
+            for sessionToNotCollide in sessionsToNotCollide:
+                if session.day == sessionToNotCollide.day:
+                    sessionToNotCollideSlots = list(range(
+                        sessionToNotCollide.hour, sessionToNotCollide.hour + sessionToNotCollide.length))
+                    sessionToNotCollideSlots.extend(sessionSlots)
+                    collisionSlots = [
+                        item for item, count in Counter(sessionToNotCollideSlots).items() if count > 1]
+                    if collisionSlots and (sessionToNotCollide, session) not in violations:
+                        violations.append((session, sessionToNotCollide))
+
+        return violations
+
     def calculateHasAllSessions(self):
         return len(self.state) == 87
 
@@ -415,26 +446,33 @@ class Schedule:
 
                 semesterAvailableSlots[day] = [
                     slot for slot in semesterAvailableSlots[day] if slot not in usedSlots]
+
                 # Check for break violations:
                 if day in [0, 1, 3] and (12 in usedSlots and 13 in usedSlots):
                     breakViolations.append((index, day))
+
                 # Check for free days
                 if len(usedSlots) == 0 and day not in [1, 2]:
                     freeDays.append((index, day))
+
                 # Check for friday violations
                 if day == 4 and (12 in usedSlots or 13 in usedSlots):
                     fridayViolations.append(index)
+
                 # Check for meeting violations
                 if day == 2 and 13 in usedSlots:
                     meetingViolations.append(index)
+
                 # Check for language session violations
                 if day in [1, 2] and (16 in usedSlots or 17 in usedSlots):
                     languageSessionViolations.append((index, day))
+
                 # Check for single-session days
                 if len(sessionsOfDay) == 1 and day in [0, 3, 4]:
                     singleSessionDays.append([index, day])
                 elif len(sessionsOfDay) == 0 and day in [1, 2]:
                     singleSessionDays.append([index, day])
+
                 # Check for multiple sessions of same course in the same day
                 courseIds = [session.course.id for session in sessionsOfDay]
                 multipleSessionCourseIds = [
@@ -443,6 +481,7 @@ class Schedule:
                     sessionsOfCourse = list(filter(
                         lambda session: session.course.id == multipleSessionCourseId, sessionsOfDay))
                     multipleSessions.append(sessionsOfCourse)
+
                 # Calculate the slot span
                 if len(usedSlots) != 0:
                     earliestSlot = min(usedSlots)
@@ -451,6 +490,7 @@ class Schedule:
                     semesterSlotSpan.append(slotSpan)
                 else:
                     semesterSlotSpan.append(0)
+
             totalSlotSpan.append(semesterSlotSpan)
             allAvailableSlots.append(semesterAvailableSlots)
         # print(totalSlotSpan)
@@ -495,6 +535,7 @@ class Schedule:
         freeDayCount = len(self.freeDays)
         singleSessionDayCount = len(self.singleSessionDays)
         multipleCourseSessionCount = len(self.multipleCourseSessions)
+        cannotCollideViolationCount = len(self.cannotCollideViolations)
         slotSpan = sum([sum(semesterSlotSpan)
                        for semesterSlotSpan in self.slotSpan])
 
@@ -513,8 +554,9 @@ class Schedule:
 
         score -= 0.4 * teacherAvailabilityViolationCount
         score -= 0.3 * singleSessionDayCount
-        score -= 0.6 * multipleCourseSessionCount
-        # Total session length (210) + Total break hours (48)
+        score -= 0.5 * multipleCourseSessionCount
+        score -= 0.6 * cannotCollideViolationCount
+        # Total session slots (210) + Total break slots (48)
         score -= 0.2 * (slotSpan - 258)
         score += 2 * freeDayCount
 
@@ -635,7 +677,7 @@ def generateObjects():
     courses = []
     for course in courses_json:
         courses.append(Course(course['id'], course['name'],
-                              course['code'], course['department'], course['year']))
+                              course['code'], course['department'], course['year'], course['cannotCollideWith']))
 
     sessions = []
     index = 0
@@ -757,10 +799,12 @@ def mutateByMovingPeriod(schedule):
 def mutateBySwapingSessions(schedule):
     if schedule.teacherCollisions:
         collision = random.choice(schedule.teacherCollisions)
-        # for session in collision:
-        #     session.printSchedule()
-        # schedule.print()
-        # schedule.printTeacherCollisions()
+    # elif schedule.teacherAvailabilityViolations:
+    #     willMutate = random.choices([True, False], [0.1, 0.9], k=1)
+    #     if willMutate:
+    #         collision = random.choice(schedule.teacherAvailabilityViolations)
+    #     else:
+    #         return schedule
     else:
         return schedule
 
@@ -776,6 +820,22 @@ def mutateBySwapingSessions(schedule):
             # newSchedule.printTeacherCollisions()
             return newSchedule
 
+    return schedule
+
+
+def mutateByRandomlySwapingSessions(schedule):
+    for _ in range(10):
+        chosenSession = random.choice(schedule.state)
+        swapableSessions = [session for session in schedule.state if isSafeToSwapTeacherCollision(
+            session, chosenSession)]
+        if swapableSessions:
+            sessionToSwap = random.choice(swapableSessions)
+            chosenSession.day, sessionToSwap.day = sessionToSwap.day, chosenSession.day
+            chosenSession.hour, sessionToSwap.hour = sessionToSwap.hour, chosenSession.hour
+            newSchedule = Schedule(schedule.state)
+            # newSchedule.print()
+            # newSchedule.printTeacherCollisions()
+            return newSchedule
     return schedule
 
 

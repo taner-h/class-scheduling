@@ -1,3 +1,4 @@
 *.js
 trash.py
 output/
+*.code-workspace
