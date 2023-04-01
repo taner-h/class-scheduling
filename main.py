@@ -553,10 +553,10 @@ class Schedule:
             breakHourViolationCount + departmentMeetingViolationCount + \
             languageSessionViolationCount + allSlotsUsedDaysCount
 
+        score -= 0.6 * cannotCollideViolationCount
+        score -= 0.5 * multipleCourseSessionCount
         score -= 0.4 * teacherAvailabilityViolationCount
         score -= 0.3 * singleSessionDayCount
-        score -= 0.5 * multipleCourseSessionCount
-        score -= 0.6 * cannotCollideViolationCount
         # Total session slots (210) + Total break slots (48)
         score -= 0.2 * (slotSpan - 258)
         score += 2 * freeDayCount
@@ -759,7 +759,7 @@ def crossover(population):
 
 
 def performMutation(schedule):
-    mutation = random.choice(range(4))
+    mutation = random.choice(range(5))
     if mutation == 0:
         return mutateByMovingPeriod(schedule)
     if mutation == 1:
@@ -768,6 +768,8 @@ def performMutation(schedule):
         return mutateByMovingSession(schedule)
     if mutation == 3:
         return mutateBySwapingSessionsOfCourse(schedule)
+    if mutation == 4:
+        return mutateBySwapingSessionsThatCannotCollide(schedule)
 
 
 def mutateByMovingPeriod(schedule):
@@ -830,12 +832,29 @@ def mutateByMovingPeriod(schedule):
 def mutateBySwapingSessions(schedule):
     if schedule.teacherCollisions:
         collision = random.choice(schedule.teacherCollisions)
-    # elif schedule.teacherAvailabilityViolations:
-    #     willMutate = random.choices([True, False], [0.1, 0.9], k=1)
-    #     if willMutate:
-    #         collision = random.choice(schedule.teacherAvailabilityViolations)
-    #     else:
-    #         return schedule
+    # elif schedule.cannotCollideViolations:
+    #     collision = random.choice(schedule.cannotCollideViolations)
+    else:
+        return schedule
+
+    for collidedSession in collision:
+        swapableSessions = [session for session in schedule.state if isSafeToSwapTeacherCollision(
+            session, collidedSession)]
+        if swapableSessions:
+            sessionToSwap = random.choice(swapableSessions)
+            collidedSession.day, sessionToSwap.day = sessionToSwap.day, collidedSession.day
+            collidedSession.hour, sessionToSwap.hour = sessionToSwap.hour, collidedSession.hour
+            newSchedule = Schedule(schedule.state)
+            # newSchedule.print()
+            # newSchedule.printTeacherCollisions()
+            return newSchedule
+
+    return schedule
+
+
+def mutateBySwapingSessionsThatCannotCollide(schedule):
+    if schedule.cannotCollideViolations:
+        collision = random.choice(schedule.cannotCollideViolations)
     else:
         return schedule
 
