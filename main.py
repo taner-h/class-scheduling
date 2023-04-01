@@ -32,7 +32,7 @@ class Teacher:
 
 
 class Session:
-    def __init__(self, id, course, teacher, length, isLab=False, suffix=None):
+    def __init__(self, id, course, teacher, length, isLab=False, suffix=None, isFixed=False, day=None, hour=None):
         self.id = id
         self.course = course
         self.teacher = teacher
@@ -40,8 +40,9 @@ class Session:
 
         self.name = self.course.name if not isLab else self.course.name + ' - ' + suffix
 
-        self.day = None
-        self.hour = None
+        self.isFixed = isFixed
+        self.day = day
+        self.hour = hour
 
     def print(self):
         print(
@@ -138,7 +139,7 @@ class Schedule:
 
     def printSemesterCollisions(self):
         print(
-            f'\n\n----- Donem Cakismalari ({len(self.semesterCollisions) + len(self.languageSessionViolations)}) -----\n')
+            f'\n----- Donem Cakismalari ({len(self.semesterCollisions) + len(self.languageSessionViolations)}) -----\n')
         for collision in self.semesterCollisions:
             for session in collision:
                 print(
@@ -151,7 +152,7 @@ class Schedule:
 
     def printTeacherCollisions(self):
         print(
-            f'\n\n----- Ogretmen Cakismalari ({len(self.teacherCollisions) + len(self.multiTeacherCollisions)}) -----\n')
+            f'\n----- Ogretmen Cakismalari ({len(self.teacherCollisions) + len(self.multiTeacherCollisions)}) -----\n')
 
         for collision in self.teacherCollisions:
             print(
@@ -170,7 +171,7 @@ class Schedule:
 
     def printBreakHourViolations(self):
         print(
-            f'\n\n----- Öğle Arası İhlalleri ({len(self.fridayBreakViolations) + len(self.breakHourViolations) + len(self.departmentMeetingViolations)}) -----\n')
+            f'\n----- Öğle Arası İhlalleri ({len(self.fridayBreakViolations) + len(self.breakHourViolations) + len(self.departmentMeetingViolations)}) -----\n')
         for index, day in self.breakHourViolations:
             print(f'Öğle Arası İhlali: {index}, {getDayName(day)}')
 
@@ -181,28 +182,28 @@ class Schedule:
             print(f'Bölüm Toplantısı İhlali: {index}')
 
     def printFreeDays(self):
-        print(f'\n\n----- Boş Günler ({len(self.freeDays)}) -----\n')
+        print(f'\n----- Boş Günler ({len(self.freeDays)}) -----\n')
         for semester, day in self.freeDays:
             print(
                 f'{getSemesterShortName(semester)}, {getDayName(day)}')
 
     def printAllSlotsUsedDays(self):
         print(
-            f'\n\n----- Tüm Slotları Kullanılan Günler ({len(self.allSlotsUsedDays)}) -----\n')
+            f'\n----- Tüm Slotları Kullanılan Günler ({len(self.allSlotsUsedDays)}) -----\n')
         for semester, day in self.allSlotsUsedDays:
             print(
                 f'{getSemesterShortName(semester)}, {getDayName(day)}')
 
     def printSingleSessionDays(self):
         print(
-            f'\n\n----- Tek Seanslı Günler ({len(self.singleSessionDays)}) -----\n')
+            f'\n----- Tek Seanslı Günler ({len(self.singleSessionDays)}) -----\n')
         for semester, day in self.singleSessionDays:
             print(
                 f'{getSemesterShortName(semester)}, {getDayName(day)}')
 
     def printMultipleCourseSessions(self):
         print(
-            f'\n\n----- Günde Birden Fazla Seanslı Dersler ({len(self.multipleCourseSessions)}) -----\n')
+            f'\n----- Günde Birden Fazla Seanslı Dersler ({len(self.multipleCourseSessions)}) -----\n')
         for course in self.multipleCourseSessions:
             for session in course:
                 print(
@@ -211,7 +212,7 @@ class Schedule:
 
     def printCannotCollideViolations(self):
         print(
-            f'\n\n----- Çakışmaması Gereken Seans Çakışmaları ({len(self.cannotCollideViolations)}) -----\n')
+            f'\n----- Çakışmaması Gereken Seans Çakışmaları ({len(self.cannotCollideViolations)}) -----\n')
 
         for collision in self.cannotCollideViolations:
             for session in collision:
@@ -221,17 +222,17 @@ class Schedule:
 
     def printSlotSpan(self):
         print(
-            f'\n\n----- Toplam Slot Açıklığı({sum([sum(semesterSlotSpan) for semesterSlotSpan in self.slotSpan])})-----\n')
+            f'\n----- Toplam Slot Açıklığı ({sum([sum(semesterSlotSpan) for semesterSlotSpan in self.slotSpan])})-----\n')
 
     def printHardConstraintViolations(self):
-        print('\n\n---------- HARD CONSTRAINT VIOLATIONS ----------\n')
+        print('\n\n---------- HARD CONSTRAINT VIOLATIONS ----------')
         self.printSemesterCollisions()
         self.printTeacherCollisions()
         self.printBreakHourViolations()
         self.printAllSlotsUsedDays()
 
     def printSoftContraints(self):
-        print('\n\n---------- SOFT CONSTRAINT VIOLATIONS ----------\n')
+        print('\n\n---------- SOFT CONSTRAINT VIOLATIONS ----------')
         self.printAvailabilityCollisions()
         self.printFreeDays()
         self.printSingleSessionDays()
@@ -597,10 +598,20 @@ def getDayName(day):
 def generateInitialSemesterSchedule(semester):
     semester = copy.deepcopy(semester)
     available = copy.deepcopy(availableSlots)
+    fixedSessions = [session for session in semester if session.isFixed]
+    if fixedSessions:
+        for fixedSession in fixedSessions:
+            available[fixedSession.day] = [x for x in available[fixedSession.day]
+                                           if x not in list(range(fixedSession.hour, fixedSession.hour + fixedSession.length))]
+        # print(available)
+
     availableDays = [i for (i, x) in enumerate(available) if x]
     scheduledSessions = []
     shuffledSemester = random.sample(semester, len(semester))
     for session in semester:
+        if session.isFixed:
+            scheduledSessions.append(session)
+            continue
         day, hour = selectAvailableDayAndHour(
             available, availableDays, session)
         if day is not False:
@@ -619,6 +630,14 @@ def generateInitialSemesterSchedule(semester):
         else:
             return False
     return scheduledSessions
+
+
+def getSlotsOfFixedSessionsOfSemester(semester, fixedSessions):
+    slots = [[], [], [], [], []]
+    for fixedSession in fixedSessions:
+        slots[fixedSession.day].extend(
+            list(range(fixedSession.hour, fixedSession.hour + fixedSession.length)))
+    return slots
 
 
 def selectAvailableDayAndHour(available, availableDays, session):
@@ -685,7 +704,7 @@ def generateObjects():
         for session in course['sessions']:
             sessions.append(
                 Session(index, courses[course['id']], teachers[session['teacherId']],
-                        session['length'], isLab=session.get("isLab", False), suffix=session.get("suffix", None)))
+                        session['length'], isLab=session.get("isLab", False), suffix=session.get("suffix", None), isFixed=session.get("isFixed", False), day=session.get("day", None), hour=session.get("hour", None)))
             index += 1
 
     return teachers, courses, sessions
@@ -780,6 +799,12 @@ def mutateByMovingPeriod(schedule):
     if period == 0 and morningPossible:
         toMutate = [
             session for session in sessionsOfDay if session.hour in morningPossible]
+
+        # make sure that a fixed session won't mutate
+        for session in toMutate:
+            if session.isFixed:
+                return schedule
+
         for session in toMutate:
             if session.hour > 9:
                 session.hour -= 1
@@ -788,6 +813,12 @@ def mutateByMovingPeriod(schedule):
     if period == 1 and eveningPossible:
         toMutate = [
             session for session in sessionsOfDay if session.hour in eveningPossible]
+
+        # make sure that a fixed session won't mutate
+        for session in toMutate:
+            if session.isFixed:
+                return schedule
+
         for session in toMutate:
             if session.hour + session.length < 18:
                 session.hour += 1
@@ -844,7 +875,9 @@ def isSafeToSwapTeacherCollision(session, collidedSession):
             session.teacher.id != collidedSession.teacher.id and \
             session.course.year == collidedSession.course.year and \
             session.course.department == collidedSession.course.department and \
-            session.length == collidedSession.length:
+            session.length == collidedSession.length and \
+            session.isFixed == False and \
+            collidedSession.isFixed == False:
         return True
     else:
         return False
@@ -867,6 +900,10 @@ def mutateByMovingSession(schedule):
     if len(sessions) == 0:
         return schedule
     session = sessions[0]
+
+    if session.isFixed:
+        return schedule
+
     availableSlots = schedule.availableSlots[semesterIndex]
 
     length = session.length
@@ -926,7 +963,9 @@ def isSafeToSwapMultipleSessions(session, sessionOfCourse):
     if session.course.id != sessionOfCourse.course.id and \
             session.course.year == sessionOfCourse.course.year and \
             session.course.department == sessionOfCourse.course.department and \
-            session.length == sessionOfCourse.length:
+            session.length == sessionOfCourse.length and \
+            session.isFixed == False and \
+            sessionOfCourse.isFixed == False:
         return True
     else:
         return False
@@ -969,7 +1008,7 @@ def printInitilaPopulationFitness(population):
     print(f'Average: {average}')
 
 
-def printPopulationFitness(population, index):
+def printPopulationFitness(population, index, bestScore):
 
     print(f'\nITERATION {index + 1}')
     for schedule in population:
@@ -978,6 +1017,8 @@ def printPopulationFitness(population, index):
     average = sum([schedule.fitness for schedule in population]
                   ) / len(population)
     print(f'Average: {average}')
+    print(f'Best of Generation: {population[0].fitness}')
+    print(f'Best So Far: {bestScore}')
 
 
 def evolution(size, limit, population):
@@ -995,7 +1036,7 @@ def evolution(size, limit, population):
         sortedPopulation = sorted(
             population, key=lambda schedule: schedule.fitness, reverse=True)
 
-        printPopulationFitness(sortedPopulation, i)
+        printPopulationFitness(sortedPopulation, i, bestScore)
 
         bestOfGeneration = sortedPopulation[0]
 

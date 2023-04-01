@@ -469,6 +469,9 @@
     "year": 4,
     "sessions": [
       {
+        "isFixed": true,
+        "day": 4,
+        "hour": 9,
         "length": 3,
         "teacherId": 36
       }
@@ -871,6 +874,9 @@
     "year": 4,
     "sessions": [
       {
+        "isFixed": true,
+        "day": 4,
+        "hour": 9,
         "length": 3,
         "teacherId": 37
       }
