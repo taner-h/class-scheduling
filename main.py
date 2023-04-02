@@ -572,6 +572,33 @@ class Schedule:
 
         return isValid, score
 
+    def recreate(self):
+        self.semesters = self.filterSemesters()
+        self.teacherSessions = self.filterByTeachers()
+
+        self.semesterCollisions = self.calculateSemesterCollisions()
+        self.teacherCollisions = self.calculateTeacherCollisions()
+        self.multiTeacherCollisions = self.calculateMultiTeacherSessionCollisions()
+        self.teacherAvailabilityViolations = self.calculateTeacherAvailabilityViolations()
+        self.cannotCollideViolations = self.calculateCannotCollideViolations()
+        results = self.calculateConstraints()
+
+        self.breakHourViolations = results[0]
+        self.departmentMeetingViolations = results[1]
+        self.fridayBreakViolations = results[2]
+        self.languageSessionViolations = results[3]
+        self.freeDays = results[4]
+        self.singleSessionDays = results[5]
+        self.multipleCourseSessions = results[6]
+        self.slotSpan = results[7]
+        self.availableSlots = results[8]
+        self.allSlotsUsedDays = self.calculateAllSlotsUsedDays()
+
+        isValid, fitness = self.calculateFitness()
+        self.fitness = fitness
+        self.isValid = isValid
+        self.hasAllSessions = self.calculateHasAllSessions()
+
 
 def getSemesterName(department, year):
     departmentName = 'Bilgisayar Mühendisliği' if department == 0 else 'Endüstri Mühendisliği'
@@ -757,7 +784,7 @@ def crossover(population):
         newSchedules = performCrossover(
             population[index * 2], population[index * 2 + 1])
         newPopulation.extend(newSchedules)
-    return newPopulation
+    return [Schedule(schedule.state) for schedule in newPopulation]
 
 
 def performMutation(schedule):
@@ -1000,7 +1027,7 @@ def mutation(population):
             newPopulation.append(performMutation(schedule))
         else:
             newPopulation.append(schedule)
-    return newPopulation
+    return [Schedule(schedule.state) for schedule in newPopulation]
 
 
 def exportSchedule(schedule, name='latest'):
@@ -1009,10 +1036,12 @@ def exportSchedule(schedule, name='latest'):
     dbfile.close()
 
 
-def importSchedule(name='latest', info=False):
+def importSchedule(name='latest', info=False, recreate=False):
     dbfile = open(f'output/{name}', 'rb')
     schedule = pickle.load(dbfile)
     dbfile.close()
+    if recreate:
+        schedule = Schedule(schedule.state)
     if info:
         schedule.printInfo()
     return schedule
@@ -1127,24 +1156,32 @@ def evolution(size, limit, population):
         bestOfGeneration = sortedPopulation[0]
 
         if bestOfGeneration.fitness > bestScore:
-            bestScore = bestOfGeneration.fitness
-            bestSoFar = bestOfGeneration
-            stagnation = 0
+            score = bestOfGeneration.fitness
+            bestOfGeneration = Schedule(bestOfGeneration.state)
+            if bestOfGeneration.fitness == score and bestOfGeneration.fitness > bestScore:
+                bestScore = bestOfGeneration.fitness
+                bestSoFar = bestOfGeneration
+                stagnation = 0
+            else:
+                print(bestOfGeneration.fitness)
+                print('PROBLEM')
 
-        printPopulationFitness(
-            sortedPopulation, generation, stagnation, bestSoFar)
+        if (bestSoFar):
+            printPopulationFitness(
+                sortedPopulation, generation, stagnation, bestSoFar)
 
         stagnation += 1
         generation += 1
 
     exportSchedule(
         bestSoFar, name=f'{round(bestSoFar.fitness, 2)}, {limit}, {size}')
+    bestSoFar = Schedule(bestSoFar.state)
     bestSoFar.printInfo()
 
     return bestSoFar
 
 
-SIZE = 64
+SIZE = 4
 LIMIT = 25
 
 teachers_json, courses_json, fixedSlots = importData()
@@ -1154,4 +1191,4 @@ availableSlots = calculateAvailableSlots()
 population = generatePopulation(SIZE)
 best = evolution(SIZE, LIMIT, population)
 saveToExcel(best)
-# imported = importSchedule(name='Problem2', info=True)
+# imported = importSchedule(name='65.5, 25, 64', info=True, recreate=True)
