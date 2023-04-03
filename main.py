@@ -40,9 +40,11 @@ class Session:
         self.teacher = teacher
         self.length = length
 
-        self.name = self.course.name if not isLab else self.course.name + ' - ' + suffix
-
         self.isFixed = isFixed
+        self.isLab = isLab
+        self.suffix = suffix
+        self.name = self.course.name if not self.isLab else self.course.name + ' - ' + self.suffix
+
         self.day = day
         self.hour = hour
 
@@ -56,7 +58,7 @@ class Session:
 
 class Schedule:
     def __init__(self, state):
-        self.state = state
+        self.state = createState(state)
 
         self.semesters = self.filterSemesters()
         self.teacherSessions = self.filterByTeachers()
@@ -561,13 +563,13 @@ class Schedule:
         score -= 0.3 * singleSessionDayCount
         # Total session slots (210) + Total break slots (48)
         score -= 0.2 * (slotSpan - 258)
-        score += 2 * freeDayCount
+        score += 1 * freeDayCount
 
         if (hardConstraintsTotal):
             score -= 0.1 * score
             isValid = False
         else:
-            score += 10
+            score += 0.2 * score
             isValid = True
 
         return isValid, score
@@ -595,6 +597,16 @@ def getDepartmentShortName(department):
 def getDayName(day):
     days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma']
     return days[day]
+
+
+def duplicateSession(session):
+    return Session(session.id, session.course, session.teacher, session.length,
+                   isLab=session.isLab, suffix=session.suffix, isFixed=session.isFixed,
+                   day=session.day, hour=session.hour)
+
+
+def createState(state):
+    return [duplicateSession(session) for session in state]
 
 
 def generateInitialSemesterSchedule(semester):
@@ -1094,7 +1106,7 @@ def printInitilaPopulationFitness(population):
 
 def printPopulationFitness(population, generation, stagnation, bestSoFar, showAll=False):
 
-    print(f'\nGENERATION {generation + 1} (stagnation= {stagnation})')
+    print(f'\nGENERATION {generation + 1}')
     if showAll:
         for schedule in population:
             schedule.printFitness()
@@ -1105,6 +1117,7 @@ def printPopulationFitness(population, generation, stagnation, bestSoFar, showAl
     print(f'Best of Generation: {round(population[0].fitness, 2)}')
     print(f'Best So Far: {round(bestSoFar.fitness, 2)}', end=' ')
     print('VALID') if bestSoFar.isValid else print('INVALID')
+    print(f'stagnation = {stagnation}')
 
 
 def evolution(size, limit, population):
@@ -1132,7 +1145,7 @@ def evolution(size, limit, population):
             stagnation = 0
 
         printPopulationFitness(
-            sortedPopulation, generation, stagnation, bestSoFar)
+            sortedPopulation, generation, stagnation, bestSoFar, showAll=PRINT_GENERATION)
 
         stagnation += 1
         generation += 1
@@ -1144,8 +1157,12 @@ def evolution(size, limit, population):
     return bestSoFar
 
 
-SIZE = 64
-LIMIT = 25
+SIZE = 64                   # Population size
+LIMIT = 25                  # Stagnation limit
+
+# If True, prints only best and average of generation
+# If False, prints whole generation
+PRINT_GENERATION = True
 
 teachers_json, courses_json, fixedSlots = importData()
 teachers, courses, sessions = generateObjects()
