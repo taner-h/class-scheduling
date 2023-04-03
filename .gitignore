@@ -3,3 +3,4 @@ trash.py
 output/
 *.code-workspace
 export/*.xlsx
+*.pyc
