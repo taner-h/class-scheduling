@@ -3,14 +3,17 @@ from utils import *
 from export import *
 import copy
 import random
+import time
 
-PRINT_GENERATION = True
+PRINT_GENERATION = False
 MUTATION_RATE = 0.1
+CROSSOVER_RATE = 0.2
 
 
 def generateInitialSemesterSchedule(semester):
     semester = copy.deepcopy(semester)
-    available = copy.deepcopy(availableSlots)
+    # available = copy.deepcopy(availableSlots)
+    available = calculateAvailableSlots()
     fixedSessions = [session for session in semester if session.isFixed]
     if fixedSessions:
         for fixedSession in fixedSessions:
@@ -93,9 +96,15 @@ def selection(population, size):
 def crossover(population, size):
     newPopulation = []
     for index in range(size//2):
-        newSchedules = performCrossover(
-            population[index * 2], population[index * 2 + 1])
-        newPopulation.extend(newSchedules)
+        willCrossover = random.choices(
+            [True, False], [CROSSOVER_RATE, 1-CROSSOVER_RATE], k=1)
+        if willCrossover:
+            newSchedules = performCrossover(
+                population[index * 2], population[index * 2 + 1])
+            newPopulation.extend(newSchedules)
+        else:
+            newPopulation.append(population[index * 2])
+            newPopulation.append(population[index * 2 + 1])
     return newPopulation
 
 
@@ -346,12 +355,15 @@ def evolution(size, limit, population):
     stagnation = 0
     generation = 0
 
+    time0 = time.time()
     printInitilaPopulationFitness(population)
+    time1 = time.time()
+
     mutateBySwapingSessionsOfCourse(population[0])
 
     while stagnation <= limit:
         population = selection(population, size)
-        population = crossover(population, size)
+        # population = crossover(population, size)
         population = mutation(population)
 
         sortedPopulation = sorted(
@@ -370,11 +382,14 @@ def evolution(size, limit, population):
         stagnation += 1
         generation += 1
 
+    time2 = time.time()
+
     exportSchedule(
         bestSoFar, name=f'{round(bestSoFar.fitness, 2)}, {limit}, {size}')
     bestSoFar.printInfo()
 
+    print(f'init: {time1-time0}, evol: {time2-time1}')
+    print(
+        f'init per schedule: {(time1-time0)/64}, evol per schedule: {(time2-time1)/generation}')
+
     return bestSoFar
-
-
-availableSlots = calculateAvailableSlots()

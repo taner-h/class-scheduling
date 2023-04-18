@@ -62,6 +62,7 @@ class Schedule:
         self.multiTeacherCollisions = self.calculateMultiTeacherSessionCollisions()
         self.teacherAvailabilityViolations = self.calculateTeacherAvailabilityViolations()
         self.cannotCollideViolations = self.calculateCannotCollideViolations()
+
         results = self.calculateConstraints()
 
         self.breakHourViolations = results[0]
@@ -84,8 +85,10 @@ class Schedule:
         semesters = []
         for department in range(2):
             for year in range(1, 5):
-                semester = list(filter(lambda session: session.course.department ==
-                                       department and session.course.year == year, self.state))
+                # semester = list(filter(lambda session: session.course.department ==
+                #                        department and session.course.year == year, self.state))
+                semester = [session for session in self.state if session.course.department ==
+                            department and session.course.year == year]
                 semesters.append(semester)
 
         return semesters
@@ -93,8 +96,10 @@ class Schedule:
     def filterByTeachers(self):
         filtered = []
         for teacher in teachers:
-            teacherSessions = list(
-                filter(lambda session: session.teacher.id == teacher.id, self.state))
+            # teacherSessions = list(
+            #     filter(lambda session: session.teacher.id == teacher.id, self.state))
+            teacherSessions = [
+                session for session in self.state if session.teacher.id == teacher.id]
             filtered.append(teacherSessions)
         return filtered
 
@@ -271,8 +276,10 @@ class Schedule:
         collisions = []
         for semester in self.semesters:
             for day in range(5):
-                sessionsOfDay = list(filter(
-                    lambda session: session.day == day, semester))
+                # sessionsOfDay = list(filter(
+                #     lambda session: session.day == day, semester))
+                sessionsOfDay = [
+                    session for session in semester if session.day == day]
                 usedSlots = []
                 sessionIds = []
                 for session in sessionsOfDay:
@@ -286,8 +293,10 @@ class Schedule:
                         usedSlots) if slot == collisionSlot]
                     collisionSessions = []
                     for index in indices:
-                        collisionSession = list(filter(
-                            lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        # collisionSession = list(filter(
+                        #     lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        collisionSession = [
+                            session for session in sessionsOfDay if session.id == sessionIds[index]][0]
                         collisionSessions.append(collisionSession)
                     collisions.append(collisionSessions)
         return collisions
@@ -296,8 +305,10 @@ class Schedule:
         collisions = []
         for sessionsOfTeacher in self.teacherSessions:
             for day in range(5):
-                sessionsOfDay = list(filter(
-                    lambda session: session.day == day, sessionsOfTeacher))
+                # sessionsOfDay = list(filter(
+                #     lambda session: session.day == day, sessionsOfTeacher))
+                sessionsOfDay = [
+                    session for session in sessionsOfTeacher if session.day == day]
                 usedSlots = []
                 sessionIds = []
 
@@ -312,8 +323,10 @@ class Schedule:
                         usedSlots) if slot == collisionSlot]
                     collisionSessions = []
                     for index in indices:
-                        collisionSession = list(filter(
-                            lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        # collisionSession = list(filter(
+                        #     lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        collisionSession = [
+                            session for session in sessionsOfDay if session.id == sessionIds[index]][0]
                         collisionSessions.append(collisionSession)
                     collisions.append(collisionSessions)
         return collisions
@@ -322,15 +335,19 @@ class Schedule:
         collisions = []
 
         for teacherId in multiTeachers:
-            sessionsOfTeacher = list(
-                filter(lambda session: session.teacher.id == teacherId, self.state))
+            # sessionsOfTeacher = list(
+            #     filter(lambda session: session.teacher.id == teacherId, self.state))
+            sessionsOfTeacher = [
+                session for session in self.state if session.teacher.id == teacherId]
             multiTeacherSession = [
                 session for session in self.state if session.course.id == multiTeacherCourseId][0]
             sessionsOfTeacher.append(multiTeacherSession)
 
             for day in range(5):
-                sessionsOfDay = list(filter(
-                    lambda session: session.day == day, sessionsOfTeacher))
+                # sessionsOfDay = list(filter(
+                #     lambda session: session.day == day, sessionsOfTeacher))
+                sessionsOfDay = [
+                    session for session in sessionsOfTeacher if session.day == day]
                 usedSlots = []
                 sessionIds = []
 
@@ -345,8 +362,10 @@ class Schedule:
                         usedSlots) if slot == collisionSlot]
                     collisionSessions = []
                     for index in indices:
-                        collisionSession = list(filter(
-                            lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        # collisionSession = list(filter(
+                        #     lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        collisionSession = [
+                            session for session in sessionsOfDay if session.id == sessionIds[index]][0]
                         collisionSessions.append(collisionSession)
                     collisions.append(collisionSessions)
 
@@ -357,9 +376,10 @@ class Schedule:
         for sessionsOfTeacher in self.teacherSessions:
             teacher = sessionsOfTeacher[0].teacher
             for day in range(5):
-                sessionsOfDay = list(filter(
-                    lambda session: session.day == day, sessionsOfTeacher))
-
+                # sessionsOfDay = list(filter(
+                #     lambda session: session.day == day, sessionsOfTeacher))
+                sessionsOfDay = [
+                    session for session in sessionsOfTeacher if session.day == day]
                 usedSlots = []
                 sessionIds = []
                 unavailableSlotsOfDay = teacher.unavailable[day]
@@ -377,8 +397,10 @@ class Schedule:
                         usedSlots) if slot == collisionSlot]
                     collisionSessions = []
                     for index in indices:
-                        collisionSession = list(filter(
-                            lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        # collisionSession = list(filter(
+                        #     lambda session: session.id == sessionIds[index], sessionsOfDay))[0]
+                        collisionSession = [
+                            session for session in sessionsOfDay if session.id == sessionIds[index]][0]
                         collisionSessions.append(collisionSession)
                     collisions.append(collisionSessions)
         return collisions
@@ -470,8 +492,10 @@ class Schedule:
                 multipleSessionCourseIds = [
                     item for item, count in Counter(courseIds).items() if count > 1]
                 for multipleSessionCourseId in multipleSessionCourseIds:
-                    sessionsOfCourse = list(filter(
-                        lambda session: session.course.id == multipleSessionCourseId, sessionsOfDay))
+                    # sessionsOfCourse = list(filter(
+                    #     lambda session: session.course.id == multipleSessionCourseId, sessionsOfDay))
+                    sessionsOfCourse = [
+                        session for session in sessionsOfDay if session.course.id == multipleSessionCourseId]
                     multipleSessions.append(sessionsOfCourse)
 
                 # Calculate the slot span
@@ -495,8 +519,10 @@ class Schedule:
         allAvailableSlots = []
         for semester in self.semesters:
             for day in range(5):
-                sessionsOfDay = list(filter(
-                    lambda session: session.day == day, semester))
+                # sessionsOfDay = list(filter(
+                #     lambda session: session.day == day, semester))
+                sessionsOfDay = [
+                    session for session in semester if session.day == day]
                 usedSlots = []
                 allSlots = [list(range(9, 18))] * 5
                 for session in sessionsOfDay:
