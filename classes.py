@@ -499,6 +499,9 @@ class Schedule:
                     multipleSessions.append(sessionsOfCourse)
 
                 # Calculate the slot span
+                if day in [1, 2]:
+                    usedSlots.extend([16, 17])
+
                 if len(usedSlots) != 0:
                     earliestSlot = min(usedSlots)
                     latestSlot = max(usedSlots)
@@ -567,9 +570,9 @@ class Schedule:
         score -= 0.5 * multipleCourseSessionCount
         score -= 0.4 * teacherAvailabilityViolationCount
         score -= 0.3 * singleSessionDayCount
-        # Total session slots (210) + Total break slots (48)
-        score -= 0.2 * (slotSpan - 258)
-        score += 1 * freeDayCount
+        # Total session slots (211) + Total break slots (48) + Language session length (32)
+        score -= 0.2 * (slotSpan - (291 - freeDayCount))
+        score += 1.5 * freeDayCount
 
         if (hardConstraintsTotal):
             score -= 0.1 * score

@@ -7,8 +7,8 @@ import time
 
 PRINT_GENERATION = False
 MUTATION_RATE = 0.1
-CROSSOVER_RATE = 0.2
-MUTATION_TYPE = 'random'  # smart/random
+CROSSOVER_RATE = 0.5
+MUTATION_TYPE = 0  # random/smart/hybrid
 
 
 def generateInitialSemesterSchedule(semester):
@@ -110,7 +110,7 @@ def crossover(population, size):
 
 
 def performMutation(schedule):
-    if MUTATION_TYPE == 'smart':
+    if MUTATION_TYPE == 1:
         n = random.choice(range(5))
         if n == 0:
             return mutateByMovingPeriod(schedule)
@@ -123,12 +123,14 @@ def performMutation(schedule):
         if n == 4:
             return mutateBySwapingSessionsThatCannotCollide(schedule)
 
-    if MUTATION_TYPE == 'random':
-        n = random.choice(range(2))
+    if MUTATION_TYPE == 0:
+        n = random.choice(range(3))
         if n == 0:
             return mutateBySwapingSessions(schedule)
         if n == 1:
             return mutateByMovingSessionsIntoEmptySpaces(schedule)
+        if n == 2:
+            return mutateByMovingSessionVertically(schedule)
 
 
 def mutateByMovingPeriod(schedule):
@@ -363,8 +365,7 @@ def isSafeToRandomlySwapSessions(session, sessionToSwap, availableSlots):
 
 def mutateByMovingSessionsIntoEmptySpaces(schedule):
     for _ in range(10):
-        chosenSemester = random.choice(schedule.semesters)
-        chosenSession = random.choice(chosenSemester)
+        chosenSession = random.choice(schedule.state)
 
         availableSlots = getSemesterSlotsOfSession(chosenSession, schedule)
 
@@ -396,6 +397,44 @@ def mutateByMovingSessionsIntoEmptySpaces(schedule):
             if chosenDay in [2, 4] or 12 in slotsAfterMutation or 13 in slotsAfterMutation:
                 chosenSession.day = chosenDay
                 chosenSession.hour = chosenHour
+                newSchedule = Schedule(schedule.state)
+                return newSchedule
+            else:
+                continue
+
+    return schedule
+
+
+def mutateByMovingSessionVertically(schedule):
+    for _ in range(10):
+        chosenSession = random.choice(schedule.state)
+
+        availableSlots = getSemesterSlotsOfSession(chosenSession, schedule)
+
+        slotsOfDay = availableSlots[chosenSession.day]
+        slotsOfSession = list(
+            range(chosenSession.hour, chosenSession.hour + chosenSession.length))
+
+        possible = getBorderingSlots(slotsOfDay, slotsOfSession)
+
+        if possible:
+            chosenHour = random.choice(possible)
+            if chosenHour < chosenSession.hour:
+                candidate = chosenHour
+
+            if chosenHour > chosenSession.hour:
+                difference = chosenHour - slotsOfSession[-1]
+                candidate = chosenSession.hour + difference
+
+            newSlotsOfSession = list(
+                range(candidate, candidate + chosenSession.length))
+
+            allSlots = slotsOfDay + slotsOfSession
+            newAllSlots = [
+                slot for slot in allSlots if slot not in newSlotsOfSession]
+
+            if chosenSession.day in [2, 4] or 12 in newAllSlots or 13 in newAllSlots:
+                chosenSession.hour = candidate
                 newSchedule = Schedule(schedule.state)
                 return newSchedule
             else:
@@ -457,7 +496,7 @@ def evolution(size, limit, population):
 
     while stagnation <= limit:
         population = selection(population, size)
-        # population = crossover(population, size)
+        population = crossover(population, size)
         population = mutation(population)
 
         sortedPopulation = sorted(

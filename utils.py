@@ -13,6 +13,15 @@ def getConsecutiveSlots(slots):
     return consecutive
 
 
+def getBorderingSlots(slotsOfDay, slotsOfSession):
+    slots = slotsOfDay + slotsOfSession
+    sortedSlots = sorted(slots)
+    for k, g in groupby(enumerate(sortedSlots), lambda i: i[0]-i[1]):
+        group = list(map(itemgetter(1), g))
+        if slotsOfSession[0] in group:
+            return [slot for slot in group if slot not in slotsOfSession]
+
+
 def calculateAvailableSlots():
     fixedSlots = importFixed()
     allSlots = [list(range(9, 18))] * 5
