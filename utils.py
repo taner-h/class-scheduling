@@ -1,4 +1,43 @@
 import json
+from operator import itemgetter
+from itertools import groupby
+
+
+def getConsecutiveSlots(slots):
+    consecutive = [[], [], [], [], []]
+    for index, day in enumerate(slots):
+        for k, g in groupby(enumerate(day), lambda i: i[0]-i[1]):
+            group = list(map(itemgetter(1), g))
+            if len(group) > 1:
+                consecutive[index].append(group)
+    return consecutive
+
+
+def calculateAvailableSlots():
+    fixedSlots = importFixed()
+    allSlots = [list(range(9, 18))] * 5
+    availableSlots = []
+    for i in range(5):
+        availableSlots.append(
+            [x for x in allSlots[i] if x not in fixedSlots[i]])
+    return availableSlots
+
+
+def getSlotsOfFixedSessionsOfSemester(semester, fixedSessions):
+    slots = [[], [], [], [], []]
+    for fixedSession in fixedSessions:
+        slots[fixedSession.day].extend(
+            list(range(fixedSession.hour, fixedSession.hour + fixedSession.length)))
+    return slots
+
+
+def getSemesterIndex(department, year):
+    return (4 * department) + year - 1
+
+
+def getSemesterSlotsOfSession(session, schedule):
+    index = getSemesterIndex(session.course.department, session.course.year)
+    return schedule.availableSlots[index]
 
 
 def getSemesterName(department, year):
@@ -25,14 +64,6 @@ def getDayName(day):
     return days[day]
 
 
-def getSlotsOfFixedSessionsOfSemester(semester, fixedSessions):
-    slots = [[], [], [], [], []]
-    for fixedSession in fixedSessions:
-        slots[fixedSession.day].extend(
-            list(range(fixedSession.hour, fixedSession.hour + fixedSession.length)))
-    return slots
-
-
 def getStateFromSemesters(schedule):
     sessions = []
     for semester in schedule.semesters:
@@ -56,16 +87,6 @@ def importFixed():
         fixedSlots = json.load(json_file)
 
     return fixedSlots
-
-
-def calculateAvailableSlots():
-    fixedSlots = importFixed()
-    allSlots = [list(range(9, 18))] * 5
-    availableSlots = []
-    for i in range(5):
-        availableSlots.append(
-            [x for x in allSlots[i] if x not in fixedSlots[i]])
-    return availableSlots
 
 
 def getMultiTeacherCourse():
