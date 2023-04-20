@@ -76,9 +76,9 @@ class Schedule:
         self.availableSlots = results[8]
         self.allSlotsUsedDays = self.calculateAllSlotsUsedDays()
 
-        isValid, fitness = self.calculateFitness()
+        isFeasible, fitness = self.calculateFitness()
         self.fitness = fitness
-        self.isValid = isValid
+        self.isFeasible = isFeasible
         self.hasAllSessions = self.calculateHasAllSessions()
 
     def filterSemesters(self):
@@ -117,8 +117,9 @@ class Schedule:
                 for session in ordered:
                     print(
                         f'{session.hour}.00 - {session.hour + session.length}.00 - {session.name}')
-                if day in [1, 2]:
-                    print('16.00 - 18.00 - Yabancı Dil')
+                if day in languageSlots[0]:
+                    print(
+                        f'{languageSlots[1][0]}.00 - {languageSlots[1][1] + 1}.00 - Yabancı Dil')
 
     def printTeacherSessions(self):
         for sessionsOfTeacher in self.teacherSessions:
@@ -151,7 +152,7 @@ class Schedule:
 
         for index, day in self.languageSessionViolations:
             print(
-                f'{getDayName(day)}: 16.00 - 18.00 - Yabancı Dil ({index})')
+                f'{getDayName(day)}: {languageSlots[1][0]}.00 - {languageSlots[1][1] + 1}.00 - Yabancı Dil ({index})')
 
     def printTeacherCollisions(self):
         print(
@@ -270,7 +271,7 @@ class Schedule:
 
     def printFitness(self):
         print(
-            f'fitness: {round(self.fitness, 2)} (isValid: {self.isValid})')
+            f'fitness: {round(self.fitness, 2)} (isFeasible: {self.isFeasible})')
 
     def calculateSemesterCollisions(self):
         collisions = []
@@ -448,7 +449,7 @@ class Schedule:
 
         for index, semester in enumerate(self.semesters):
             semesterSlotSpan = []
-            semesterAvailableSlots = calculateAvailableSlots()
+            semesterAvailableSlots = copy.deepcopy(initialAvailableSlots)
             for day in range(5):
 
                 sessionsOfDay = [
@@ -466,7 +467,7 @@ class Schedule:
                     breakViolations.append((index, day))
 
                 # Check for free days
-                if len(usedSlots) == 0 and day not in [1, 2]:
+                if len(usedSlots) == 0 and day not in languageSlots[0]:
                     freeDays.append((index, day))
 
                 # Check for friday violations
@@ -478,13 +479,13 @@ class Schedule:
                     meetingViolations.append(index)
 
                 # Check for language session violations
-                if day in [1, 2] and (16 in usedSlots or 17 in usedSlots):
+                if day in languageSlots[0] and (languageSlots[1][0] in usedSlots or languageSlots[1][1] in usedSlots):
                     languageSessionViolations.append((index, day))
 
                 # Check for single-session days
                 if len(sessionsOfDay) == 1 and day in [0, 3, 4]:
                     singleSessionDays.append([index, day])
-                elif len(sessionsOfDay) == 0 and day in [1, 2]:
+                elif len(sessionsOfDay) == 0 and day in languageSlots[0]:
                     singleSessionDays.append([index, day])
 
                 # Check for multiple sessions of same course in the same day
@@ -499,8 +500,8 @@ class Schedule:
                     multipleSessions.append(sessionsOfCourse)
 
                 # Calculate the slot span
-                if day in [1, 2]:
-                    usedSlots.extend([16, 17])
+                if day in languageSlots[0]:
+                    usedSlots.extend(languageSlots[1])
 
                 if len(usedSlots) != 0:
                     earliestSlot = min(usedSlots)
@@ -518,19 +519,18 @@ class Schedule:
 
         return violations
 
-    def calculateAvailableSlots():
-        allAvailableSlots = []
-        for semester in self.semesters:
-            for day in range(5):
-                # sessionsOfDay = list(filter(
-                #     lambda session: session.day == day, semester))
-                sessionsOfDay = [
-                    session for session in semester if session.day == day]
-                usedSlots = []
-                allSlots = [list(range(9, 18))] * 5
-                for session in sessionsOfDay:
-                    usedSlots.extend(
-                        list(range(session.hour, session.hour + session.length)))
+    # def calculateAvailableSlots():
+    #     allAvailableSlots = []
+    #     for semester in self.semesters:
+    #         for day in range(5):
+
+    #             sessionsOfDay = [
+    #                 session for session in semester if session.day == day]
+    #             usedSlots = []
+    #             allSlots = [list(range(9, 18))] * 5
+    #             for session in sessionsOfDay:
+    #                 usedSlots.extend(
+    #                     list(range(session.hour, session.hour + session.length)))
 
     def calculateFitness(self):
         # ! Hard Constraints
@@ -554,7 +554,7 @@ class Schedule:
                        for semesterSlotSpan in self.slotSpan])
 
         score = 50.0
-        isValid = False
+        isFeasible = False
 
         score -= 2 * (semesterCollisionCount + teacherCollisionCount +
                       multiTeacherCollisionCount + languageSessionViolationCount)
@@ -566,22 +566,22 @@ class Schedule:
             breakHourViolationCount + departmentMeetingViolationCount + \
             languageSessionViolationCount + allSlotsUsedDaysCount
 
-        score -= 0.6 * cannotCollideViolationCount
-        score -= 0.5 * multipleCourseSessionCount
-        score -= 0.4 * teacherAvailabilityViolationCount
-        score -= 0.3 * singleSessionDayCount
+        score -= 0.5 * cannotCollideViolationCount
+        score -= 0.3 * teacherAvailabilityViolationCount
+        score -= 0.4 * singleSessionDayCount
+        score -= 0.2 * multipleCourseSessionCount
         # Total session slots (211) + Total break slots (48) + Language session length (32)
-        score -= 0.2 * (slotSpan - (291 - freeDayCount))
-        score += 1.5 * freeDayCount
+        score -= 0.3 * (slotSpan - (291 - freeDayCount))
+        score += 1 * freeDayCount
 
         if (hardConstraintsTotal):
             score -= 0.1 * score
-            isValid = False
+            isFeasible = False
         else:
             score += 0.2 * score
-            isValid = True
+            isFeasible = True
 
-        return isValid, score
+        return isFeasible, score
 
 
 def duplicateSession(session):

@@ -5,17 +5,31 @@ import copy
 import random
 import time
 
-PRINT_GENERATION = False
-MUTATION_RATE = 0.1
+SIZE = 100                  # Population size
+STAGNATION_LIMIT = 70
+
+MUTATION_RATE_1 = 0.1
+MUTATION_RATE_2 = 0.2
+MUTATION_RATE_3 = 0.3
+
+STAGNATION_THRESHOLD_1 = 15
+STAGNATION_THRESHOLD_2 = 30
+
+GENERATION_THRESHOLD_1 = 50
+GENERATION_THRESHOLD_2 = 100
+
 CROSSOVER_RATE = 0.5
-MUTATION_TYPE = 0  # random/smart/hybrid
+MUTATION_TYPE = 3  # random/smart/hybrid
+
+PRINT_GENERATION = False
 
 
 def generateInitialSemesterSchedule(semester):
     semester = copy.deepcopy(semester)
-    # available = copy.deepcopy(availableSlots)
-    available = calculateAvailableSlots()
+    available = copy.deepcopy(initialAvailableSlots)
+
     fixedSessions = [session for session in semester if session.isFixed]
+
     if fixedSessions:
         for fixedSession in fixedSessions:
             available[fixedSession.day] = [x for x in available[fixedSession.day]
@@ -24,12 +38,15 @@ def generateInitialSemesterSchedule(semester):
     availableDays = [i for (i, x) in enumerate(available) if x]
     scheduledSessions = []
     shuffledSemester = random.sample(semester, len(semester))
+
     for session in semester:
         if session.isFixed:
             scheduledSessions.append(session)
             continue
+
         day, hour = selectAvailableDayAndHour(
             available, availableDays, session)
+
         if day is not False:
             session.day = day
             session.hour = hour
@@ -41,37 +58,46 @@ def generateInitialSemesterSchedule(semester):
 
         else:
             return False
+
     return scheduledSessions
 
 
 def selectAvailableDayAndHour(available, availableDays, session):
     count = 0
+
     while True:
         day = random.choice(availableDays)
         hour = random.choice(available[day])
         slots = list(range(hour, hour + session.length))
+
         if 12 in slots and 13 in slots:
             count += 1
+
         else:
             isAllAvailable = all(x in available[day] for x in slots)
             if (isAllAvailable):
                 return day, hour
             count += 1
+
         if count > 50:
             return False, False
 
 
 def generateRandomSchedule():
     semesters = []
+
     for department in range(2):
         for year in range(1, 5):
             semester = list(filter(lambda session: session.course.department ==
                                    department and session.course.year == year, sessions))
             found = False
+
             while found == False or len(found) == 0:
                 found = generateInitialSemesterSchedule(semester)
             semesters.extend(found)
+
     schedule = Schedule(semesters)
+
     return schedule
 
 
@@ -96,9 +122,11 @@ def selection(population, size):
 
 def crossover(population, size):
     newPopulation = []
+
     for index in range(size//2):
         willCrossover = random.choices(
             [True, False], [CROSSOVER_RATE, 1-CROSSOVER_RATE], k=1)
+
         if willCrossover:
             newSchedules = performCrossover(
                 population[index * 2], population[index * 2 + 1])
@@ -106,31 +134,85 @@ def crossover(population, size):
         else:
             newPopulation.append(population[index * 2])
             newPopulation.append(population[index * 2 + 1])
+
     return newPopulation
 
 
-def performMutation(schedule):
-    if MUTATION_TYPE == 1:
-        n = random.choice(range(5))
-        if n == 0:
-            return mutateByMovingPeriod(schedule)
-        if n == 1:
-            return mutateBySwapingSessionsOfTeacher(schedule)
-        if n == 2:
-            return mutateByMovingSingleSessions(schedule)
-        if n == 3:
-            return mutateBySwapingSessionsOfCourse(schedule)
-        if n == 4:
-            return mutateBySwapingSessionsThatCannotCollide(schedule)
+def safeMutation(schedule):
+    n = random.choice(range(3))
+    if n == 0:
+        return mutateBySwapingSessions(schedule)
+    if n == 1:
+        return mutateByMovingSessionsIntoEmptySpaces(schedule)
+    if n == 2:
+        return mutateByMovingSessionVertically(schedule)
 
+
+def correctiveMutation(schedule):
+    n = random.choice(range(5))
+    if n == 0:
+        return mutateByMovingPeriod(schedule)
+    if n == 1:
+        return mutateBySwapingSessionsOfTeacher(schedule)
+    if n == 2:
+        return mutateByMovingSingleSessions(schedule)
+    if n == 3:
+        return mutateBySwapingSessionsOfCourse(schedule)
+    if n == 4:
+        return mutateBySwapingSessionsThatCannotCollide(schedule)
+
+
+def hybridMutation(schedule):
+    n = random.choice(range(8))
+    if n == 0:
+        return mutateByMovingPeriod(schedule)
+    if n == 1:
+        return mutateBySwapingSessionsOfTeacher(schedule)
+    if n == 2:
+        return mutateByMovingSingleSessions(schedule)
+    if n == 3:
+        return mutateBySwapingSessionsOfCourse(schedule)
+    if n == 4:
+        return mutateBySwapingSessionsThatCannotCollide(schedule)
+    if n == 5:
+        return mutateBySwapingSessions(schedule)
+    if n == 6:
+        return mutateByMovingSessionsIntoEmptySpaces(schedule)
+    if n == 7:
+        return mutateByMovingSessionVertically(schedule)
+
+
+def smartMutation(schedule):
+    n = random.choice(range(6))
+    if n == 0:
+        return mutateByMovingSingleSessions(schedule)
+    if n == 1:
+        return mutateBySwapingSessionsOfCourse(schedule)
+    if n == 2:
+        return mutateBySwapingSessionsThatCannotCollide(schedule)
+    if n == 3:
+        return mutateBySwapingSessions(schedule)
+    if n == 4:
+        return mutateByMovingSessionsIntoEmptySpaces(schedule)
+    if n == 5:
+        return mutateByMovingSessionVertically(schedule)
+
+
+def performMutation(schedule):
     if MUTATION_TYPE == 0:
-        n = random.choice(range(3))
-        if n == 0:
-            return mutateBySwapingSessions(schedule)
-        if n == 1:
-            return mutateByMovingSessionsIntoEmptySpaces(schedule)
-        if n == 2:
-            return mutateByMovingSessionVertically(schedule)
+        return safeMutation(schedule)
+
+    if MUTATION_TYPE == 1:
+        return correctiveMutation(schedule)
+
+    if MUTATION_TYPE == 2:
+        return hybridMutation(schedule)
+
+    if MUTATION_TYPE == 3:
+        if not schedule.isFeasible:
+            return correctiveMutation(schedule)
+        else:
+            return smartMutation(schedule)
 
 
 def mutateByMovingPeriod(schedule):
@@ -138,6 +220,7 @@ def mutateByMovingPeriod(schedule):
         semester, day = random.choice(schedule.breakHourViolations)
     else:
         return schedule
+
     availableSlotsOfDay = schedule.availableSlots[semester][day]
     morningSlots = [
         slot for slot in availableSlotsOfDay if slot in [9, 10, 11]]
@@ -146,17 +229,21 @@ def mutateByMovingPeriod(schedule):
 
     sessionsOfDay = list(filter(
         lambda session: session.day == day, schedule.semesters[semester]))
+
     startTime = [session.hour for session in sessionsOfDay]
     morningPossible = []
     eveningPossible = []
+
     if sum(morningSlots):
         morningPossible = [slot for slot in range(
             morningSlots[0], 13) if slot in startTime]
+
     if sum(eveningSlots):
         eveningPossible = [slot for slot in range(
             12, eveningSlots[-1] + 1) if slot in startTime]
 
     period = random.randint(0, 1)
+
     if period == 0 and morningPossible:
         toMutate = [
             session for session in sessionsOfDay if session.hour in morningPossible]
@@ -197,6 +284,7 @@ def mutateBySwapingSessionsOfTeacher(schedule):
     for collidedSession in collision:
         swapableSessions = [session for session in schedule.state if isSafeToSwapTeacherCollision(
             session, collidedSession)]
+
         if swapableSessions:
             sessionToSwap = random.choice(swapableSessions)
             collidedSession.day, sessionToSwap.day = sessionToSwap.day, collidedSession.day
@@ -217,6 +305,7 @@ def mutateBySwapingSessionsThatCannotCollide(schedule):
     for collidedSession in collision:
         swapableSessions = [session for session in schedule.state if isSafeToSwapTeacherCollision(
             session, collidedSession)]
+
         if swapableSessions:
             sessionToSwap = random.choice(swapableSessions)
             collidedSession.day, sessionToSwap.day = sessionToSwap.day, collidedSession.day
@@ -249,7 +338,7 @@ def mutateByMovingSingleSessions(schedule):
         return schedule
 
     semester = schedule.semesters[semesterIndex]
-    if day in [1, 2]:
+    if day in languageSlots[0]:
         return schedule
 
     sessions = [session for session in semester if session.day == day]
@@ -264,6 +353,7 @@ def mutateByMovingSingleSessions(schedule):
 
     length = session.length
     possibleSlots = []
+
     if length == 2:
         for availableSlotsOfDay in availableSlots:
             possibleSlots.append([
@@ -298,6 +388,7 @@ def mutateBySwapingSessionsOfCourse(schedule):
     for sessionOfCourse in sessionsOfCourse:
         swapableSessions = [session for session in schedule.state if isSafeToSwapMultipleSessions(
             session, sessionOfCourse)]
+
         if swapableSessions:
             sessionToSwap = random.choice(swapableSessions)
             sessionOfCourse.day, sessionToSwap.day = sessionToSwap.day, sessionOfCourse.day
@@ -328,6 +419,7 @@ def mutateBySwapingSessions(schedule):
 
         swapableSessions = [session for session in chosenSemester
                             if isSafeToRandomlySwapSessions(session, chosenSession, schedule.availableSlots)]
+
         if swapableSessions:
             sessionToSwap = random.choice(swapableSessions)
             chosenSession.day, sessionToSwap.day = sessionToSwap.day, chosenSession.day
@@ -340,6 +432,7 @@ def mutateBySwapingSessions(schedule):
 def isSafeToRandomlySwapSessions(session, sessionToSwap, availableSlots):
     if session.isFixed == True and sessionToSwap.isFixed == True:
         return False
+
     if session.length == sessionToSwap.length:
         return True
     else:
@@ -347,10 +440,12 @@ def isSafeToRandomlySwapSessions(session, sessionToSwap, availableSlots):
             shortSession = sessionToSwap
         else:
             shortSession = session
+
         semesterIndex = getSemesterIndex(
             shortSession.course.department, shortSession.course.year)
         dayIndex = shortSession.day
         followingSlot = shortSession.hour + shortSession.length
+
         if followingSlot == 13:
             return False
 
@@ -366,9 +461,7 @@ def isSafeToRandomlySwapSessions(session, sessionToSwap, availableSlots):
 def mutateByMovingSessionsIntoEmptySpaces(schedule):
     for _ in range(10):
         chosenSession = random.choice(schedule.state)
-
         availableSlots = getSemesterSlotsOfSession(chosenSession, schedule)
-
         consecutive = getConsecutiveSlots(availableSlots)
 
         possible = []
@@ -390,7 +483,6 @@ def mutateByMovingSessionsIntoEmptySpaces(schedule):
                 range(chosenHour, chosenHour + chosenSession.length))
 
             availableSlotsOfChosen = availableSlots[chosenDay]
-
             slotsAfterMutation = [
                 slot for slot in availableSlotsOfChosen if slot not in chosenSlots]
 
@@ -443,22 +535,27 @@ def mutateByMovingSessionVertically(schedule):
     return schedule
 
 
-def mutation(population):
+def mutation(population, mutationRate):
     newPopulation = []
+
     for schedule in population:
         willMutate = random.choices(
-            [True, False], [MUTATION_RATE, 1-MUTATION_RATE], k=1)
+            [True, False], [mutationRate, 1-mutationRate], k=1)
+
         if willMutate:
             newPopulation.append(performMutation(schedule))
         else:
             newPopulation.append(schedule)
+
     return newPopulation
 
 
 def printInitilaPopulationFitness(population):
     sortedPopulation = sorted(
         population, key=lambda schedule: schedule.fitness, reverse=True)
+
     print(f'\n INITIAL POPULATION')
+
     for schedule in sortedPopulation:
         schedule.printFitness()
     average = sum([schedule.fitness for schedule in sortedPopulation]
@@ -466,38 +563,46 @@ def printInitilaPopulationFitness(population):
     print(f'Average: {average}')
 
 
-def printPopulationFitness(population, generation, stagnation, bestSoFar, showAll=False):
-
+def printPopulationFitness(population, generation, stagnation, bestSoFar, mutationRate, showAll=False):
     print(f'\nGENERATION {generation + 1}')
+
     if showAll:
         for schedule in population:
             schedule.printFitness()
 
     average = sum([schedule.fitness for schedule in population]
                   ) / len(population)
+
     print(f'Average: {round(average, 2)}')
     print(f'Best of Generation: {round(population[0].fitness, 2)}')
     print(f'Best So Far: {round(bestSoFar.fitness, 2)}', end=' ')
-    print('VALID') if bestSoFar.isValid else print('INVALID')
-    print(f'stagnation = {stagnation}')
+    print('FEASIBLE') if bestSoFar.isFeasible else print('NON-FEASIBLE')
+    print(f'stagnation = {stagnation}, mutation_rate = {mutationRate}')
 
 
-def evolution(size, limit, population):
+def evolution():
     bestScore = 0
     bestSoFar = None
     stagnation = 0
     generation = 0
 
+    hasReachedStagnationThreshold1 = False
+    hasReachedStagnationThreshold2 = False
+    hasReachedGenerationThreshold1 = False
+    hasReachedGenerationThreshold2 = False
+
+    mutationRate = MUTATION_RATE_1
+
     time0 = time.time()
-    printInitilaPopulationFitness(population)
+    population = generatePopulation(SIZE)
     time1 = time.time()
 
-    # mutateBySwapingSessionsOfCourse(population[0])
+    printInitilaPopulationFitness(population)
 
-    while stagnation <= limit:
-        population = selection(population, size)
-        population = crossover(population, size)
-        population = mutation(population)
+    while stagnation <= STAGNATION_LIMIT:
+        population = selection(population, SIZE)
+        population = crossover(population, SIZE)
+        population = mutation(population, mutationRate)
 
         sortedPopulation = sorted(
             population, key=lambda schedule: schedule.fitness, reverse=True)
@@ -509,8 +614,28 @@ def evolution(size, limit, population):
             bestSoFar = bestOfGeneration
             stagnation = 0
 
+        if not hasReachedStagnationThreshold1:
+            if stagnation >= STAGNATION_THRESHOLD_1:
+                hasReachedStagnationThreshold1 = True
+                mutationRate = MUTATION_RATE_2
+
+        if not hasReachedStagnationThreshold2:
+            if stagnation >= STAGNATION_THRESHOLD_2:
+                hasReachedStagnationThreshold1 = True
+                mutationRate = MUTATION_RATE_3
+
+        if not hasReachedGenerationThreshold1:
+            if generation >= GENERATION_THRESHOLD_1:
+                hasReachedGenerationThreshold1 = True
+                mutationRate = MUTATION_RATE_2
+
+        if not hasReachedGenerationThreshold2:
+            if generation >= GENERATION_THRESHOLD_2:
+                hasReachedGenerationThreshold2 = True
+                mutationRate = MUTATION_RATE_3
+
         printPopulationFitness(
-            sortedPopulation, generation, stagnation, bestSoFar, showAll=PRINT_GENERATION)
+            sortedPopulation, generation, stagnation, bestSoFar, mutationRate, showAll=PRINT_GENERATION)
 
         stagnation += 1
         generation += 1
@@ -518,11 +643,12 @@ def evolution(size, limit, population):
     time2 = time.time()
 
     exportSchedule(
-        bestSoFar, name=f'{round(bestSoFar.fitness, 2)}, {limit}, {size}')
+        bestSoFar, name=f'{round(bestSoFar.fitness, 2)}, {STAGNATION_LIMIT}, {SIZE}')
     bestSoFar.printInfo()
 
-    print(f'init: {time1-time0}, evol: {time2-time1}')
     print(
-        f'init per schedule: {(time1-time0)/64}, evol per schedule: {(time2-time1)/generation}')
+        f'\nPopulation initialisation:\t{time1-time0}\nEvoluton total time:\t\t{time2-time1}')
+    print(
+        f'Time per generation:\t\t{(time2-time1)/generation}')
 
     return bestSoFar

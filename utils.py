@@ -24,11 +24,18 @@ def getBorderingSlots(slotsOfDay, slotsOfSession):
 
 def calculateAvailableSlots():
     fixedSlots = importFixed()
+    languageSlots = getLanguageSlots()
+
     allSlots = [list(range(9, 18))] * 5
     availableSlots = []
+    unavailableSlots = []
+
+    for i in range(5):
+        unavailableSlots.append(fixedSlots[i] + languageSlots[i])
+
     for i in range(5):
         availableSlots.append(
-            [x for x in allSlots[i] if x not in fixedSlots[i]])
+            [x for x in allSlots[i] if x not in unavailableSlots[i]])
     return availableSlots
 
 
@@ -98,7 +105,29 @@ def importFixed():
     return fixedSlots
 
 
+def getLanguageSlots():
+    languageSessions = importLanguageSessions()
+    languageSlots = [[]] * 5
+
+    for i in range(5):
+        if i in languageSessions[0]:
+            languageSlots[i] = languageSessions[1]
+
+    return languageSlots
+
+
 def getMultiTeacherCourse():
     courses_json = importData()[1]
     return next(
         (course['id'], course['teachers']) for course in courses_json if course.get("hasMultiTeachers", False) == True)
+
+
+def importLanguageSessions():
+    with open('./data/languageSlots.json', encoding='utf-8') as json_file:
+        languageSessions = json.load(json_file)
+
+    return languageSessions
+
+
+languageSlots = importLanguageSessions()
+initialAvailableSlots = calculateAvailableSlots()

@@ -1,6 +1,7 @@
 import pickle
 import openpyxl
 import os
+from utils import languageSlots
 
 
 def exportSchedule(schedule, name='latest'):
@@ -45,9 +46,10 @@ def saveToExcel(schedule, openFile=False):
                 ws[mergeStart].alignment = openpyxl.styles.Alignment(horizontal='center', vertical='center',
                                                                      wrapText=True)
 
-            if day in [1, 2]:
-                ws.merge_cells(f"{dayColumn}16:{dayColumn}17")
-                mergeStart = f"{dayColumn}16"
+            if day in languageSlots[0]:
+                ws.merge_cells(
+                    f"{dayColumn}{languageSlots[1][0]}:{dayColumn}{languageSlots[1][1]}")
+                mergeStart = f"{dayColumn}{languageSlots[1][0]}"
                 ws[mergeStart].font = openpyxl.styles.Font(
                     bold=True, name='TimesNewRoman', size='11')
                 ws[mergeStart] = 'Yabancı Dil'

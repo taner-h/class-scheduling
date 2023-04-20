@@ -5,11 +5,8 @@ import cProfile
 
 
 def main():
-    SIZE = 100                  # Population size
-    LIMIT = 50                  # Stagnation limit
 
-    population = generatePopulation(SIZE)
-    best = evolution(SIZE, LIMIT, population)
+    best = evolution()
     saveToExcel(best, openFile=True)
     # imported = importSchedule(name='Problem2', info=True)
 

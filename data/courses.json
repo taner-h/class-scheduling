@@ -155,9 +155,6 @@
     "year": 2,
     "sessions": [
       {
-        "isFixed": true,
-        "day": 0,
-        "hour": 9,
         "length": 3,
         "teacherId": 1
       }
