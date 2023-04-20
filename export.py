@@ -19,7 +19,7 @@ def importSchedule(name='latest', info=False):
     return schedule
 
 
-def saveToExcel(schedule, openFile=False):
+def saveToExcel(schedule, openFile=False, filename=None):
     wb = openpyxl.load_workbook("template.xlsx")
     sheets = wb.sheetnames
 
@@ -55,8 +55,11 @@ def saveToExcel(schedule, openFile=False):
                 ws[mergeStart] = 'Yabancı Dil'
 
         setBorder(ws)
-
-    wb.save(f"./export/{round(schedule.fitness, 2)}.xlsx")
+    if not filename:
+        name = f"./export/{round(schedule.fitness, 2)}.xlsx"
+    else:
+        name = f"./export/{filename}.xlsx"
+    wb.save(name)
     if openFile:
         cwd = os.getcwd()
         os.startfile(f"{cwd}\\export\\{round(schedule.fitness, 2)}.xlsx")

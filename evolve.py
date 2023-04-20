@@ -20,9 +20,9 @@ GENERATION_THRESHOLD_1 = 50
 GENERATION_THRESHOLD_2 = 100
 
 CROSSOVER_RATE = 0.5
-MUTATION_TYPE = 2  # random/corrective/hybrid/smart
+MUTATION_TYPE = 3  # random/corrective/hybrid/smart
 
-PRINT_GENERATION = True
+PRINT_GENERATION = False
 
 
 def generateInitialSemesterSchedule(semester):
@@ -230,6 +230,8 @@ def mutateByMovingPeriod(schedule):
     if schedule.breakHourViolations:
         semester, day = random.choice(schedule.breakHourViolations)
     else:
+        if MUTATION_TYPE == 3:
+            return smartMutation2(schedule)
         return schedule
 
     availableSlotsOfDay = schedule.availableSlots[semester][day]
@@ -290,6 +292,8 @@ def mutateBySwapingSessionsOfTeacher(schedule):
     if schedule.teacherCollisions:
         collision = random.choice(schedule.teacherCollisions)
     else:
+        if MUTATION_TYPE == 3:
+            return smartMutation2(schedule)
         return schedule
 
     for collidedSession in collision:
@@ -472,6 +476,8 @@ def isSafeToRandomlySwapSessions(session, sessionToSwap, availableSlots):
 def mutateByMovingSessionsIntoEmptySpaces(schedule):
     for _ in range(10):
         chosenSession = random.choice(schedule.state)
+        if chosenSession.isFixed:
+            continue
         availableSlots = getSemesterSlotsOfSession(chosenSession, schedule)
         consecutive = getConsecutiveSlots(availableSlots)
 
@@ -511,6 +517,8 @@ def mutateByMovingSessionsIntoEmptySpaces(schedule):
 def mutateByMovingSessionVertically(schedule):
     for _ in range(10):
         chosenSession = random.choice(schedule.state)
+        if chosenSession.isFixed:
+            continue
 
         availableSlots = getSemesterSlotsOfSession(chosenSession, schedule)
 
@@ -633,7 +641,7 @@ def evolution():
 
         if bestOfGeneration.fitness > bestScore:
             bestScore = bestOfGeneration.fitness
-            bestSoFar = bestOfGeneration
+            bestSoFar = copy.deepcopy(bestOfGeneration)
             stagnation = 0
 
         if not hasReachedStagnationThreshold1:

@@ -1,6 +1,7 @@
 from utils import *
 from collections import Counter
 import copy
+import random
 
 
 class Course:
@@ -74,6 +75,7 @@ class Schedule:
         self.multipleCourseSessions = results[6]
         self.slotSpan = results[7]
         self.availableSlots = results[8]
+        self.emptySlots = results[9]
         self.allSlotsUsedDays = self.calculateAllSlotsUsedDays()
 
         isFeasible, fitness = self.calculateFitness()
@@ -228,6 +230,15 @@ class Schedule:
         print(
             f'\n----- Toplam Slot Açıklığı ({sum([sum(semesterSlotSpan) for semesterSlotSpan in self.slotSpan])})-----\n')
 
+    def printEmptySlots(self):
+        print(
+            f'\n----- Boş Bırakılan Ara Slotlar ({len(self.emptySlots)}) -----\n')
+
+        for emptySlot in self.emptySlots:
+            print(
+                f'{getSemesterShortName(emptySlot[0])}, {getDayName(emptySlot[1])}, {emptySlot[2]}')
+        print()
+
     def printHardConstraintViolations(self):
         print('\n\n---------- HARD CONSTRAINT VIOLATIONS ----------')
         self.printSemesterCollisions()
@@ -243,6 +254,7 @@ class Schedule:
         self.printMultipleCourseSessions()
         self.printCannotCollideViolations()
         self.printSlotSpan()
+        self.printEmptySlots()
 
     def printInfo(self):
         self.print()
@@ -446,6 +458,7 @@ class Schedule:
         totalSlotSpan = []
         languageSessionViolations = []
         allAvailableSlots = []
+        allEmptySlots = []
 
         for index, semester in enumerate(self.semesters):
             semesterSlotSpan = []
@@ -511,11 +524,42 @@ class Schedule:
                 else:
                     semesterSlotSpan.append(0)
 
+                # Calculate empty slots
+                if not usedSlots:
+                    continue
+
+                usedSlots.sort()
+                dayRange = list(range(usedSlots[0], usedSlots[-1] + 1))
+                dayRange = [
+                    slot for slot in dayRange if slot in semesterAvailableSlots[day]]
+
+                emptySlots = len(dayRange)
+
+                if 12 in dayRange or 13 in dayRange:
+                    emptySlots -= 1
+
+                if emptySlots:
+                    if 12 in dayRange and 13 in dayRange:
+                        n = random.choice([12, 13])
+                        dayRange = [slot for slot in dayRange if slot != n]
+                        for emptySlot in dayRange:
+                            allEmptySlots.append([index, day, emptySlot])
+                    elif 12 in dayRange:
+                        for emptySlot in dayRange:
+                            if emptySlot == 12:
+                                continue
+                            allEmptySlots.append([index, day, emptySlot])
+                    elif 13 in dayRange:
+                        for emptySlot in dayRange:
+                            if emptySlot == 13:
+                                continue
+                            allEmptySlots.append([index, day, emptySlot])
+
             totalSlotSpan.append(semesterSlotSpan)
             allAvailableSlots.append(semesterAvailableSlots)
 
         violations = [breakViolations, meetingViolations, fridayViolations, languageSessionViolations,
-                      freeDays, singleSessionDays, multipleSessions, totalSlotSpan, allAvailableSlots]
+                      freeDays, singleSessionDays, multipleSessions, totalSlotSpan, allAvailableSlots, allEmptySlots]
 
         return violations
 
