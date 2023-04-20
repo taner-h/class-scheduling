@@ -5,8 +5,9 @@ import copy
 import random
 import time
 
-SIZE = 100                  # Population size
+SIZE = 100
 STAGNATION_LIMIT = 70
+ELIT_SIZE = 12
 
 MUTATION_RATE_1 = 0.1
 MUTATION_RATE_2 = 0.2
@@ -19,9 +20,9 @@ GENERATION_THRESHOLD_1 = 50
 GENERATION_THRESHOLD_2 = 100
 
 CROSSOVER_RATE = 0.5
-MUTATION_TYPE = 3  # random/smart/hybrid
+MUTATION_TYPE = 2  # random/corrective/hybrid/smart
 
-PRINT_GENERATION = False
+PRINT_GENERATION = True
 
 
 def generateInitialSemesterSchedule(semester):
@@ -115,9 +116,11 @@ def performCrossover(schedule1, schedule2):
     return [newSchedule1, newSchedule2]
 
 
-def selection(population, size):
+def selection(population, size, elit2):
     scores = [max(schedule.fitness, 0) for schedule in population]
-    return random.choices(population, scores, k=size)
+    selected = random.choices(population, scores, k=size)
+    selected.extend(elit2)
+    return random.sample(selected, len(selected))
 
 
 def crossover(population, size):
@@ -182,7 +185,15 @@ def hybridMutation(schedule):
         return mutateByMovingSessionVertically(schedule)
 
 
-def smartMutation(schedule):
+def smartMutation1(schedule):
+    n = random.choice(range(2))
+    if n == 0:
+        return mutateByMovingPeriod(schedule)
+    if n == 1:
+        return mutateBySwapingSessionsOfTeacher(schedule)
+
+
+def smartMutation2(schedule):
     n = random.choice(range(6))
     if n == 0:
         return mutateByMovingSingleSessions(schedule)
@@ -210,9 +221,9 @@ def performMutation(schedule):
 
     if MUTATION_TYPE == 3:
         if not schedule.isFeasible:
-            return correctiveMutation(schedule)
+            return smartMutation1(schedule)
         else:
-            return smartMutation(schedule)
+            return smartMutation2(schedule)
 
 
 def mutateByMovingPeriod(schedule):
@@ -599,13 +610,24 @@ def evolution():
 
     printInitilaPopulationFitness(population)
 
+    sortedPopulation = sorted(
+        population, key=lambda schedule: schedule.fitness, reverse=True)
+
+    elit1 = sortedPopulation[:ELIT_SIZE//2]
+    elit2 = sortedPopulation[ELIT_SIZE//2:ELIT_SIZE]
+
     while stagnation <= STAGNATION_LIMIT:
-        population = selection(population, SIZE)
-        population = crossover(population, SIZE)
+
+        population = selection(population, SIZE - ELIT_SIZE, elit2)
+        population = crossover(population, SIZE - ELIT_SIZE//2)
         population = mutation(population, mutationRate)
+        population.extend(elit1)
 
         sortedPopulation = sorted(
             population, key=lambda schedule: schedule.fitness, reverse=True)
+
+        elit1 = sortedPopulation[:ELIT_SIZE//2]
+        elit2 = sortedPopulation[ELIT_SIZE//2:ELIT_SIZE]
 
         bestOfGeneration = sortedPopulation[0]
 
