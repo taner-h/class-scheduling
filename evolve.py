@@ -6,21 +6,23 @@ import random
 import time
 
 SIZE = 100
-STAGNATION_LIMIT = 70
-ELIT_SIZE = 12
+STAGNATION_LIMIT = 75
+ELITE_SIZE = 12
 
 MUTATION_RATE_1 = 0.1
 MUTATION_RATE_2 = 0.2
 MUTATION_RATE_3 = 0.3
 
 STAGNATION_THRESHOLD_1 = 15
-STAGNATION_THRESHOLD_2 = 30
+STAGNATION_THRESHOLD_2 = 35
 
 GENERATION_THRESHOLD_1 = 50
 GENERATION_THRESHOLD_2 = 100
 
 CROSSOVER_RATE = 0.5
-MUTATION_TYPE = 3  # random/corrective/hybrid/smart
+MUTATION_TYPE = 3               # 0: random / 1: corrective / 2: hybrid / 3: smart
+
+GENERATION_LIMIT = 1000
 
 PRINT_GENERATION = False
 
@@ -116,10 +118,10 @@ def performCrossover(schedule1, schedule2):
     return [newSchedule1, newSchedule2]
 
 
-def selection(population, size, elit2):
+def selection(population, size, elite2):
     scores = [max(schedule.fitness, 0) for schedule in population]
     selected = random.choices(population, scores, k=size)
-    selected.extend(elit2)
+    selected.extend(elite2)
     return random.sample(selected, len(selected))
 
 
@@ -152,7 +154,7 @@ def safeMutation(schedule):
 
 
 def correctiveMutation(schedule):
-    n = random.choice(range(5))
+    n = random.choice(range(6))
     if n == 0:
         return mutateByMovingPeriod(schedule)
     if n == 1:
@@ -163,10 +165,12 @@ def correctiveMutation(schedule):
         return mutateBySwapingSessionsOfCourse(schedule)
     if n == 4:
         return mutateBySwapingSessionsThatCannotCollide(schedule)
+    if n == 5:
+        return mutateBySlidingSessions(schedule)
 
 
 def hybridMutation(schedule):
-    n = random.choice(range(8))
+    n = random.choice(range(9))
     if n == 0:
         return mutateByMovingPeriod(schedule)
     if n == 1:
@@ -183,6 +187,8 @@ def hybridMutation(schedule):
         return mutateByMovingSessionsIntoEmptySpaces(schedule)
     if n == 7:
         return mutateByMovingSessionVertically(schedule)
+    if n == 8:
+        return mutateBySlidingSessions(schedule)
 
 
 def smartMutation1(schedule):
@@ -194,7 +200,7 @@ def smartMutation1(schedule):
 
 
 def smartMutation2(schedule):
-    n = random.choice(range(6))
+    n = random.choice(range(7))
     if n == 0:
         return mutateByMovingSingleSessions(schedule)
     if n == 1:
@@ -202,10 +208,12 @@ def smartMutation2(schedule):
     if n == 2:
         return mutateBySwapingSessionsThatCannotCollide(schedule)
     if n == 3:
-        return mutateBySwapingSessions(schedule)
+        return mutateBySlidingSessions(schedule)
     if n == 4:
-        return mutateByMovingSessionsIntoEmptySpaces(schedule)
+        return mutateBySwapingSessions(schedule)
     if n == 5:
+        return mutateByMovingSessionsIntoEmptySpaces(schedule)
+    if n == 6:
         return mutateByMovingSessionVertically(schedule)
 
 
@@ -315,6 +323,8 @@ def mutateBySwapingSessionsThatCannotCollide(schedule):
     if schedule.cannotCollideViolations:
         collision = random.choice(schedule.cannotCollideViolations)
     else:
+        if MUTATION_TYPE == 3:
+            return smartMutation2(schedule)
         return schedule
 
     for collidedSession in collision:
@@ -350,6 +360,8 @@ def mutateByMovingSingleSessions(schedule):
     if schedule.singleSessionDays:
         semesterIndex, day = random.choice(schedule.singleSessionDays)
     else:
+        if MUTATION_TYPE == 3:
+            return smartMutation2(schedule)
         return schedule
 
     semester = schedule.semesters[semesterIndex]
@@ -396,8 +408,9 @@ def mutateByMovingSingleSessions(schedule):
 def mutateBySwapingSessionsOfCourse(schedule):
     if schedule.multipleCourseSessions:
         sessionsOfCourse = random.choice(schedule.multipleCourseSessions)
-
     else:
+        if MUTATION_TYPE == 3:
+            return smartMutation2(schedule)
         return schedule
 
     for sessionOfCourse in sessionsOfCourse:
@@ -425,6 +438,35 @@ def isSafeToSwapMultipleSessions(session, sessionOfCourse):
         return True
     else:
         return False
+
+
+def mutateBySlidingSessions(schedule):
+    if schedule.emptySlots:
+        emptySlot = random.choice(schedule.emptySlots)
+    else:
+        if MUTATION_TYPE == 3:
+            return smartMutation2(schedule)
+        return schedule
+
+    semester = schedule.semesters[emptySlot[0]]
+    sessionsOfDay = [
+        session for session in semester if session.day == emptySlot[1]]
+    # sessionsOfDay = semester[emptySlot[1]]
+
+    slot = emptySlot[2]
+
+    if slot in [11, 12]:
+        for session in sessionsOfDay:
+            if session.hour + session.length - 1 < slot:
+                session.hour += slot - (session.hour + session.length - 1)
+    elif slot in [14, 15]:
+        for session in sessionsOfDay:
+            if session.hour > 14:
+                session.hour -= session.hour - slot
+    else:
+        return schedule
+
+    return Schedule(schedule.state)
 
 
 def mutateBySwapingSessions(schedule):
@@ -582,7 +624,7 @@ def printInitilaPopulationFitness(population):
     print(f'Average: {average}')
 
 
-def printPopulationFitness(population, generation, stagnation, bestSoFar, mutationRate, showAll=False):
+def printPopulationFitness(population, generation, stagnation, bestNonElite, bestSoFar, mutationRate, showAll=False):
     print(f'\nGENERATION {generation + 1}')
 
     if showAll:
@@ -593,7 +635,7 @@ def printPopulationFitness(population, generation, stagnation, bestSoFar, mutati
                   ) / len(population)
 
     print(f'Average: {round(average, 2)}')
-    print(f'Best of Generation: {round(population[0].fitness, 2)}')
+    print(f'Best of Generation: {round(bestNonElite.fitness, 2)}')
     print(f'Best So Far: {round(bestSoFar.fitness, 2)}', end=' ')
     print('FEASIBLE') if bestSoFar.isFeasible else print('NON-FEASIBLE')
     print(f'stagnation = {stagnation}, mutation_rate = {mutationRate}')
@@ -621,21 +663,25 @@ def evolution():
     sortedPopulation = sorted(
         population, key=lambda schedule: schedule.fitness, reverse=True)
 
-    elit1 = sortedPopulation[:ELIT_SIZE//2]
-    elit2 = sortedPopulation[ELIT_SIZE//2:ELIT_SIZE]
+    elite1 = sortedPopulation[:ELITE_SIZE//2]
+    elite2 = sortedPopulation[ELITE_SIZE//2:ELITE_SIZE]
 
-    while stagnation <= STAGNATION_LIMIT:
+    while stagnation <= STAGNATION_LIMIT and generation <= GENERATION_LIMIT:
 
-        population = selection(population, SIZE - ELIT_SIZE, elit2)
-        population = crossover(population, SIZE - ELIT_SIZE//2)
+        population = selection(population, SIZE - ELITE_SIZE, elite2)
+        population = crossover(population, SIZE - ELITE_SIZE//2)
         population = mutation(population, mutationRate)
-        population.extend(elit1)
+
+        bestNonElite = sorted(
+            population, key=lambda schedule: schedule.fitness, reverse=True)[0]
+
+        population.extend(elite1)
 
         sortedPopulation = sorted(
             population, key=lambda schedule: schedule.fitness, reverse=True)
 
-        elit1 = sortedPopulation[:ELIT_SIZE//2]
-        elit2 = sortedPopulation[ELIT_SIZE//2:ELIT_SIZE]
+        elite1 = sortedPopulation[:ELITE_SIZE//2]
+        elite2 = sortedPopulation[ELITE_SIZE//2:ELITE_SIZE]
 
         bestOfGeneration = sortedPopulation[0]
 
@@ -644,28 +690,24 @@ def evolution():
             bestSoFar = copy.deepcopy(bestOfGeneration)
             stagnation = 0
 
-        if not hasReachedStagnationThreshold1:
-            if stagnation >= STAGNATION_THRESHOLD_1:
-                hasReachedStagnationThreshold1 = True
-                mutationRate = MUTATION_RATE_2
+        if not hasReachedStagnationThreshold1 and stagnation >= STAGNATION_THRESHOLD_1:
+            hasReachedStagnationThreshold1 = True
+            mutationRate = MUTATION_RATE_2
 
-        if not hasReachedStagnationThreshold2:
-            if stagnation >= STAGNATION_THRESHOLD_2:
-                hasReachedStagnationThreshold1 = True
-                mutationRate = MUTATION_RATE_3
+        if not hasReachedStagnationThreshold2 and stagnation >= STAGNATION_THRESHOLD_2:
+            hasReachedStagnationThreshold1 = True
+            mutationRate = MUTATION_RATE_3
 
-        if not hasReachedGenerationThreshold1:
-            if generation >= GENERATION_THRESHOLD_1:
-                hasReachedGenerationThreshold1 = True
-                mutationRate = MUTATION_RATE_2
+        if not hasReachedGenerationThreshold1 and generation >= GENERATION_THRESHOLD_1:
+            hasReachedGenerationThreshold1 = True
+            mutationRate = MUTATION_RATE_2
 
-        if not hasReachedGenerationThreshold2:
-            if generation >= GENERATION_THRESHOLD_2:
-                hasReachedGenerationThreshold2 = True
-                mutationRate = MUTATION_RATE_3
+        if not hasReachedGenerationThreshold2 and generation >= GENERATION_THRESHOLD_2:
+            hasReachedGenerationThreshold2 = True
+            mutationRate = MUTATION_RATE_3
 
         printPopulationFitness(
-            sortedPopulation, generation, stagnation, bestSoFar, mutationRate, showAll=PRINT_GENERATION)
+            sortedPopulation, generation, stagnation, bestNonElite, bestSoFar, mutationRate, showAll=PRINT_GENERATION)
 
         stagnation += 1
         generation += 1

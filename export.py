@@ -56,13 +56,13 @@ def saveToExcel(schedule, openFile=False, filename=None):
 
         setBorder(ws)
     if not filename:
-        name = f"./export/{round(schedule.fitness, 2)}.xlsx"
+        name = f"./excel/{round(schedule.fitness, 2)}.xlsx"
     else:
-        name = f"./export/{filename}.xlsx"
+        name = f"./excel/{filename}.xlsx"
     wb.save(name)
     if openFile:
         cwd = os.getcwd()
-        os.startfile(f"{cwd}\\export\\{round(schedule.fitness, 2)}.xlsx")
+        os.startfile(f"{cwd}\\excel\\{round(schedule.fitness, 2)}.xlsx")
 
 
 def setBorder(ws):

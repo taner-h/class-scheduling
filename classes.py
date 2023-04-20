@@ -540,8 +540,8 @@ class Schedule:
 
                 if emptySlots:
                     if 12 in dayRange and 13 in dayRange:
-                        n = random.choice([12, 13])
-                        dayRange = [slot for slot in dayRange if slot != n]
+                        # n = random.choice([12, 13])
+                        dayRange = [slot for slot in dayRange if slot != 13]
                         for emptySlot in dayRange:
                             allEmptySlots.append([index, day, emptySlot])
                     elif 12 in dayRange:
@@ -553,6 +553,9 @@ class Schedule:
                         for emptySlot in dayRange:
                             if emptySlot == 13:
                                 continue
+                            allEmptySlots.append([index, day, emptySlot])
+                    else:
+                        for emptySlot in dayRange:
                             allEmptySlots.append([index, day, emptySlot])
 
             totalSlotSpan.append(semesterSlotSpan)
@@ -596,6 +599,7 @@ class Schedule:
         cannotCollideViolationCount = len(self.cannotCollideViolations)
         slotSpan = sum([sum(semesterSlotSpan)
                        for semesterSlotSpan in self.slotSpan])
+        emptySlotCount = len(self.emptySlots)
 
         score = 50.0
         isFeasible = False
@@ -611,11 +615,12 @@ class Schedule:
             languageSessionViolationCount + allSlotsUsedDaysCount
 
         score -= 0.5 * cannotCollideViolationCount
-        score -= 0.3 * teacherAvailabilityViolationCount
         score -= 0.4 * singleSessionDayCount
+        score -= 0.3 * teacherAvailabilityViolationCount
         score -= 0.2 * multipleCourseSessionCount
         # Total session slots (211) + Total break slots (48) + Language session length (32)
-        score -= 0.3 * (slotSpan - (291 - freeDayCount))
+        score -= 0.25 * (slotSpan - (291 - freeDayCount))
+        score -= 0.15 * (emptySlotCount - 5)
         score += 1 * freeDayCount
 
         if (hardConstraintsTotal):
