@@ -63,6 +63,7 @@ class Schedule:
         self.multiTeacherCollisions = self.calculateMultiTeacherSessionCollisions()
         self.teacherAvailabilityViolations = self.calculateTeacherAvailabilityViolations()
         self.cannotCollideViolations = self.calculateCannotCollideViolations()
+        self.fixedSessionViolations = self.calculateFixedSlotViolations()
 
         results = self.calculateConstraints()
 
@@ -187,6 +188,13 @@ class Schedule:
         for index in self.departmentMeetingViolations:
             print(f'Bölüm Toplantısı İhlali: {index}')
 
+    def printFixedSessionViolations(self):
+        print(
+            f'\n----- Sabit Seans İhlalleri ({len(self.fixedSessionViolations)}) -----\n')
+        for violation in self.fixedSessionViolations:
+            print(
+                f'{getSemesterShortName(violation[1])}, {getDayName(violation[2])}')
+
     def printFreeDays(self):
         print(f'\n----- Boş Günler ({len(self.freeDays)}) -----\n')
         for semester, day in self.freeDays:
@@ -245,6 +253,7 @@ class Schedule:
         self.printTeacherCollisions()
         self.printBreakHourViolations()
         self.printAllSlotsUsedDays()
+        self.printFixedSessionViolations()
 
     def printSoftContraints(self):
         print('\n\n---------- SOFT CONSTRAINT VIOLATIONS ----------')
@@ -566,18 +575,22 @@ class Schedule:
 
         return violations
 
-    # def calculateAvailableSlots():
-    #     allAvailableSlots = []
-    #     for semester in self.semesters:
-    #         for day in range(5):
+    def calculateFixedSlotViolations(self):
+        violations = []
+        currentFixedSessions = [
+            session for session in self.state if session.isFixed]
 
-    #             sessionsOfDay = [
-    #                 session for session in semester if session.day == day]
-    #             usedSlots = []
-    #             allSlots = [list(range(9, 18))] * 5
-    #             for session in sessionsOfDay:
-    #                 usedSlots.extend(
-    #                     list(range(session.hour, session.hour + session.length)))
+        for fixedSession in fixedSessions:
+            currentFixedSession = [
+                session for session in currentFixedSessions if session.id == fixedSession.id][0]
+
+            if currentFixedSession.day != fixedSession.day:
+                semester = getSemesterIndex(
+                    currentFixedSession.course.department, currentFixedSession.course.year)
+                violations.append(
+                    [currentFixedSession.id, semester, currentFixedSession.day])
+
+        return violations
 
     def calculateFitness(self):
         # ! Hard Constraints
@@ -589,6 +602,7 @@ class Schedule:
         fridayBreakViolationCount = len(self.fridayBreakViolations)
         departmentMeetingViolationCount = len(self.departmentMeetingViolations)
         allSlotsUsedDaysCount = len(self.allSlotsUsedDays)
+        fixedSessionViolationCount = len(self.fixedSessionViolations)
 
         # ? Soft Constraints
         teacherAvailabilityViolationCount = len(
@@ -605,7 +619,8 @@ class Schedule:
         isFeasible = False
 
         score -= 2 * (semesterCollisionCount + teacherCollisionCount +
-                      multiTeacherCollisionCount + languageSessionViolationCount)
+                      multiTeacherCollisionCount + languageSessionViolationCount -
+                      fixedSessionViolationCount)
         score -= 3 * (fridayBreakViolationCount +
                       breakHourViolationCount + departmentMeetingViolationCount)
         score -= 3 * allSlotsUsedDaysCount
@@ -665,9 +680,11 @@ def generateObjects():
                         session['length'], isLab=session.get("isLab", False), suffix=session.get("suffix", None), isFixed=session.get("isFixed", False), day=session.get("day", None), hour=session.get("hour", None)))
             index += 1
 
-    return teachers, courses, sessions
+    fixedSessions = [session for session in sessions if session.isFixed]
+
+    return teachers, courses, sessions, fixedSessions
 
 
 teachers_json, courses_json = importData()
 multiTeacherCourseId, multiTeachers = getMultiTeacherCourse()
-teachers, courses, sessions = generateObjects()
+teachers, courses, sessions, fixedSessions = generateObjects()

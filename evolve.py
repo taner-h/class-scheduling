@@ -20,7 +20,7 @@ GENERATION_THRESHOLD_1 = 50
 GENERATION_THRESHOLD_2 = 100
 
 CROSSOVER_RATE = 0.5
-MUTATION_TYPE = 3               # 0: random / 1: corrective / 2: hybrid / 3: smart
+MUTATION_TYPE = 0              # 0: random / 1: corrective / 2: hybrid / 3: smart
 
 GENERATION_LIMIT = 1000
 
@@ -451,7 +451,6 @@ def mutateBySlidingSessions(schedule):
     semester = schedule.semesters[emptySlot[0]]
     sessionsOfDay = [
         session for session in semester if session.day == emptySlot[1]]
-    # sessionsOfDay = semester[emptySlot[1]]
 
     slot = emptySlot[2]
 
