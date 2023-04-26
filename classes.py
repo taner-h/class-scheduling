@@ -618,25 +618,28 @@ class Schedule:
         score = 50.0
         isFeasible = False
 
-        score -= 2 * (semesterCollisionCount + teacherCollisionCount +
-                      multiTeacherCollisionCount + languageSessionViolationCount -
-                      fixedSessionViolationCount)
-        score -= 3 * (fridayBreakViolationCount +
-                      breakHourViolationCount + departmentMeetingViolationCount)
-        score -= 3 * allSlotsUsedDaysCount
+        score -= w1 * \
+            (semesterCollisionCount + languageSessionViolationCount)
+        score -= w2 * (teacherCollisionCount + multiTeacherCollisionCount)
+        score -= w3 * fixedSessionViolationCount
 
-        hardConstraintsTotal = semesterCollisionCount + teacherCollisionCount + multiTeacherCollisionCount + fridayBreakViolationCount + \
-            breakHourViolationCount + departmentMeetingViolationCount + \
-            languageSessionViolationCount + allSlotsUsedDaysCount
+        score -= w4 * (fridayBreakViolationCount + breakHourViolationCount +
+                       departmentMeetingViolationCount + allSlotsUsedDaysCount)
 
-        score -= 0.5 * cannotCollideViolationCount
-        score -= 0.4 * singleSessionDayCount
-        score -= 0.3 * teacherAvailabilityViolationCount
-        score -= 0.2 * multipleCourseSessionCount
+        hardConstraintsTotal = (semesterCollisionCount + teacherCollisionCount +
+                                multiTeacherCollisionCount + fridayBreakViolationCount +
+                                breakHourViolationCount + departmentMeetingViolationCount +
+                                languageSessionViolationCount + allSlotsUsedDaysCount +
+                                fixedSessionViolationCount)
+
+        score -= w5 * cannotCollideViolationCount
+        score -= w6 * singleSessionDayCount
+        score -= w7 * teacherAvailabilityViolationCount
+        score -= w8 * multipleCourseSessionCount
         # Total session slots (211) + Total break slots (48) + Language session length (32)
-        score -= 0.25 * (slotSpan - (291 - freeDayCount))
-        score -= 0.15 * (emptySlotCount - 5)
-        score += 1 * freeDayCount
+        score -= w9 * (slotSpan - (291 - freeDayCount))
+        score -= w10 * (emptySlotCount - 5)
+        score += w11 * freeDayCount
 
         if (hardConstraintsTotal):
             score -= 0.1 * score
@@ -688,3 +691,16 @@ def generateObjects():
 teachers_json, courses_json = importData()
 multiTeacherCourseId, multiTeachers = getMultiTeacherCourse()
 teachers, courses, sessions, fixedSessions = generateObjects()
+constraintWeights = importConstraintWeights()
+
+w1 = constraintWeights.get('semesterCollision', 2)
+w2 = constraintWeights.get('teacherCollision', 2)
+w3 = constraintWeights.get('fixedSessionViolation', 2)
+w4 = constraintWeights.get('breakHourViolation', 3)
+w5 = constraintWeights.get('cannotCollideViolation', 0.5)
+w6 = constraintWeights.get('singleSessionDay', 0.4)
+w7 = constraintWeights.get('teacherAvailabilityViolation', 0.3)
+w8 = constraintWeights.get('multipleCourseSession', 0.2)
+w9 = constraintWeights.get('slotSpan', 0.25)
+w10 = constraintWeights.get('emptySlot', 0.15)
+w11 = constraintWeights.get('freeDay', 1)

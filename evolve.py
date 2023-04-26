@@ -5,24 +5,6 @@ import copy
 import random
 import time
 
-SIZE = 100
-STAGNATION_LIMIT = 75
-ELITE_SIZE = 12
-
-MUTATION_RATE_1 = 0.1
-MUTATION_RATE_2 = 0.2
-MUTATION_RATE_3 = 0.3
-
-STAGNATION_THRESHOLD_1 = 15
-STAGNATION_THRESHOLD_2 = 35
-
-GENERATION_THRESHOLD_1 = 50
-GENERATION_THRESHOLD_2 = 100
-
-CROSSOVER_RATE = 0.5
-MUTATION_TYPE = 0              # 0: random / 1: corrective / 2: hybrid / 3: smart
-
-GENERATION_LIMIT = 1000
 
 PRINT_GENERATION = False
 
@@ -723,3 +705,26 @@ def evolution():
         f'Time per generation:\t\t{(time2-time1)/generation}')
 
     return bestSoFar
+
+
+constants = importEvolutionConstants()
+
+SIZE = constants.get('SIZE', 100)
+STAGNATION_LIMIT = constants.get('STAGNATION_LIMIT', 75)
+ELITE_SIZE = constants.get('ELITE_SIZE', 12)
+
+# 0: random / 1: corrective / 2: hybrid / 3: smart
+MUTATION_TYPE = constants.get('MUTATION_TYPE', 3)
+
+MUTATION_RATE_1 = constants.get('MUTATION_RATE_1', 0.1)
+MUTATION_RATE_2 = constants.get('MUTATION_RATE_2', 0.2)
+MUTATION_RATE_3 = constants.get('MUTATION_RATE_3', 0.3)
+
+STAGNATION_THRESHOLD_1 = constants.get('STAGNATION_THRESHOLD_1', 15)
+STAGNATION_THRESHOLD_2 = constants.get('STAGNATION_THRESHOLD_2', 35)
+
+GENERATION_THRESHOLD_1 = constants.get('GENERATION_THRESHOLD_1', 50)
+GENERATION_THRESHOLD_2 = constants.get('GENERATION_THRESHOLD_2', 100)
+CROSSOVER_RATE = constants.get('CROSSOVER_RATE', 0.5)
+
+GENERATION_LIMIT = constants.get('GENERATION_LIMIT', 1000)

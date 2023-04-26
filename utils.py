@@ -129,5 +129,19 @@ def importLanguageSessions():
     return languageSessions
 
 
+def importEvolutionConstants():
+    with open('./data/evolutionConstants.json', encoding='utf-8') as json_file:
+        evolutionConstants = json.load(json_file)
+
+    return evolutionConstants
+
+
+def importConstraintWeights():
+    with open('./data/constraintWeights.json', encoding='utf-8') as json_file:
+        constraintWeights = json.load(json_file)
+
+    return constraintWeights
+
+
 languageSlots = importLanguageSessions()
 initialAvailableSlots = calculateAvailableSlots()

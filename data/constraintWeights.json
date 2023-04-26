@@ -1,0 +1,1 @@
+{"semesterCollision":2,"teacherCollision":2,"fixedSessionViolation":2,"breakHourViolation":3,"cannotCollideViolation":0.5,"singleSessionDay":0.4,"teacherAvailabilityViolation":0.3,"multipleCourseSession":0.2,"slotSpan":0.25,"emptySlot":0.15,"freeDay":1}
