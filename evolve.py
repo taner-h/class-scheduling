@@ -68,9 +68,29 @@ def selectAvailableDayAndHour(available, availableDays, session):
             if INITIALISATION_METHOD == 1:
                 return False, False
             if INITIALISATION_METHOD == 2:
-                day = random.choice(availableDays)
-                hour = random.choice(available[day])
-                return day, hour
+                return selectRandomDayAndHour(available, availableDays, session)
+
+
+def selectRandomDayAndHour(available, availableDays, session):
+    while True:
+        day = random.choice(availableDays)
+        length = session.length
+        if length == 2:
+            availableFor2 = [
+                slot for slot in available[day] if slot != 17]
+            if availableFor2:
+                hour = random.choice(availableFor2)
+            else:
+                continue
+        else:
+            availableFor3 = [
+                slot for slot in available[day] if slot not in [16, 17]]
+            if availableFor3:
+                hour = random.choice(availableFor3)
+            else:
+                continue
+
+        return day, hour
 
 
 def generateRandomSchedule():
@@ -106,14 +126,14 @@ def performCrossover(schedule1, schedule2):
 
 
 def selection(population, size, elite2):
-    # if INITIALISATION_METHOD == 1:
-    scores = [max(schedule.fitness, 1) for schedule in population]
-    # else:
-    #     sortedPopulation = sorted(
-    #         population, key=lambda schedule: schedule.fitness)
-    #     worstFitness = sortedPopulation[0].fitness
-    #     offset = 0 - worstFitness
-    #     scores = [schedule.fitness + offset for schedule in population]
+    if INITIALISATION_METHOD == 1:
+        scores = [max(schedule.fitness, 1) for schedule in population]
+    else:
+        sortedPopulation = sorted(
+            population, key=lambda schedule: schedule.fitness)
+        worstFitness = sortedPopulation[0].fitness
+        offset = 0 - worstFitness
+        scores = [schedule.fitness + offset for schedule in population]
 
     selected = random.choices(population, scores, k=size)
     selected.extend(elite2)
