@@ -65,7 +65,12 @@ def selectAvailableDayAndHour(available, availableDays, session):
             count += 1
 
         if count > 50:
-            return False, False
+            if INITIALISATION_METHOD == 1:
+                return False, False
+            if INITIALISATION_METHOD == 2:
+                day = random.choice(availableDays)
+                hour = random.choice(available[day])
+                return day, hour
 
 
 def generateRandomSchedule():
@@ -101,7 +106,15 @@ def performCrossover(schedule1, schedule2):
 
 
 def selection(population, size, elite2):
-    scores = [max(schedule.fitness, 0) for schedule in population]
+    # if INITIALISATION_METHOD == 1:
+    scores = [max(schedule.fitness, 1) for schedule in population]
+    # else:
+    #     sortedPopulation = sorted(
+    #         population, key=lambda schedule: schedule.fitness)
+    #     worstFitness = sortedPopulation[0].fitness
+    #     offset = 0 - worstFitness
+    #     scores = [schedule.fitness + offset for schedule in population]
+
     selected = random.choices(population, scores, k=size)
     selected.extend(elite2)
     return random.sample(selected, len(selected))
@@ -623,7 +636,7 @@ def printPopulationFitness(population, generation, stagnation, bestNonElite, bes
 
 
 def evolution():
-    bestScore = 0
+    bestScore = float('-inf')
     bestSoFar = None
     stagnation = 0
     generation = 0
@@ -728,3 +741,6 @@ GENERATION_THRESHOLD_2 = constants.get('GENERATION_THRESHOLD_2', 100)
 CROSSOVER_RATE = constants.get('CROSSOVER_RATE', 0.5)
 
 GENERATION_LIMIT = constants.get('GENERATION_LIMIT', 1000)
+
+# 1: greedy / 2: hybrid
+INITIALISATION_METHOD = 2
